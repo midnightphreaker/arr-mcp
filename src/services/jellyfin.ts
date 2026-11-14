@@ -84,7 +84,9 @@ type RawItem = {
     Type?: string;
     UserData?: { PlaybackPositionTicks?: number; LastPlayedDate?: string; Played?: boolean };
 };
-type RawActivityEntry = { Name?: string; Type?: string; ItemId?: string | null; Date?: string; UserId?: string };
+/** The same row, as one server's log may name the user by its internal account
+ *  number rather than the id every other route uses. See `logUserMatcher`. */
+export type RawActivityEntry = { Name?: string; Type?: string; ItemId?: string | null; Date?: string; UserId?: string };
 type RawSession = {
     UserId?: string;
     UserName?: string;
@@ -544,9 +546,23 @@ export class JellyfinAdapter
         return page.Items ?? [];
     }
 
+    /** How one server's activity log names the user a stop belongs to. The two
+     *  disagree, and neither says so: Jellyfin echoes back the undashed GUID it
+     *  uses everywhere else, while Emby 4.10 answers `"1"`, its internal row
+     *  number (live-confirmed 2026-11-14: all 131 logged stops carried
+     *  `UserId: "1"` against the GUID `/Users` reports for that same account).
+     *  Comparing raw ids therefore drops every Emby row, and it does so quietly,
+     *  because an empty history is a plausible answer. */
+    protected activityLogUserMatches(entry: RawActivityEntry, user: ServiceUser): boolean {
+        return entry.UserId === user.id;
+    }
+
     /** This user's newest stop per item. A failed read degrades to none rather
      *  than failing the history: the marked-played half is still a correct answer
-     *  to most questions, and losing it over a supplementary read would not be. */
+     *  to most questions, and losing it over a supplementary read would not be.
+     *
+     *  The user list is read only when a server cannot name its own log rows; see
+     *  `logUserMatcher`. */
     protected async activityLogStops(user: ServiceUser): Promise<RawActivityEntry[]> {
         let entries: RawActivityEntry[];
         try {
@@ -556,7 +572,19 @@ export class JellyfinAdapter
             return [];
         }
 
-        return newestStopPerItem(entries.filter(e => e.UserId === user.id));
+        const matches = await this.logUserMatcher(entries, user);
+        return newestStopPerItem(entries.filter(matches));
+    }
+
+    /** A predicate over the log rows for one user, given the rows themselves.
+     *  The default needs nothing beyond the id it was handed; a server whose log
+     *  uses another vocabulary (Emby) resolves it against the account list here,
+     *  and only when a row actually carries that other form. */
+    protected async logUserMatcher(
+        _entries: RawActivityEntry[],
+        user: ServiceUser
+    ): Promise<(entry: RawActivityEntry) => boolean> {
+        return entry => this.activityLogUserMatches(entry, user);
     }
 
     /**
@@ -822,8 +850,9 @@ export class JellyfinAdapter
      * The pattern is a constructor argument rather than a literal: Emby's item
      * ids are numeric strings while its user and server ids are 32-hex, so
      * Jellyfin's rule would refuse every real Emby id (docs/emby-probes.md,
-     * item 2 of "Four things its API does not say out loud"). The message names the product from `#label`, not from this
-     * file's name, because an Emby user must not be told to look in Jellyfin.
+     * item 2 of "Five things its API does not say out loud"). The message names
+     * the product from `#label`, not from this file's name, because an Emby user
+     * must not be told to look in Jellyfin.
      */
     #itemId(id: string): string {
         const clean = id.trim().toLowerCase();

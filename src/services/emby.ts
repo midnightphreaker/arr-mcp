@@ -1,10 +1,10 @@
 import type { ConfigByService } from '../config/schema.ts';
 import { embyToken } from '../core/auth.ts';
 import type { PlaybackEntry, ServiceUser } from './types.ts';
-import { JellyfinAdapter, type JellyfinFamilyIdentity } from './jellyfin.ts';
+import { JellyfinAdapter, type JellyfinFamilyIdentity, type RawActivityEntry } from './jellyfin.ts';
 
 /**
- * The Emby adapter: `JellyfinAdapter` with Emby's identity and the four places
+ * The Emby adapter: `JellyfinAdapter` with Emby's identity and the five places
  * its 4.10 differs, each one recorded in `docs/emby-probes.md` rather
  * than assumed. Everything else (the version read, the user directory,
  * sessions, Next Up, the library read, paging, fencing) is inherited unchanged,
@@ -43,7 +43,7 @@ import { JellyfinAdapter, type JellyfinFamilyIdentity } from './jellyfin.ts';
  *   read would claim an entire collection is unmanaged or absent, which is the
  *   one thing `musicGathered` exists to prevent.
  *
- * ## The four differences, in order of how much they cost
+ * ## The five differences, in order of how much they cost
  *
  * 1. **Watch history has one source.** `/Users/{id}/PlayedItems` is 404 and
  *    `Filters=Played` / `Filters=IsPlayed` are **accepted and ignored**, still
@@ -67,6 +67,11 @@ import { JellyfinAdapter, type JellyfinFamilyIdentity } from './jellyfin.ts';
  *    unproven; `/Users/{id}/Items/Resume` answered 200 and correctly shaped. It
  *    is empty on the captured instance, which `docs/tools.md` marks as
  *    unverified rather than treating as a working answer.
+ * 5. **Its activity log names users by their internal account row**, `"1"`, not by
+ *    the GUID every other Emby route uses, and it ignores a `userId=` set to that
+ *    GUID (probes, item 5; found live rather than in a fixture, because the
+ *    captured rows held that value either way). Comparing the two id spaces
+ *    dropped every row, which is how a server with real play data answered empty.
  */
 
 /** Emby's own activity-log filter. The dotted type is what this server accepts;
@@ -155,5 +160,29 @@ export class EmbyAdapter extends JellyfinAdapter {
      */
     override async getWatchHistory(user: ServiceUser): Promise<PlaybackEntry[]> {
         return this.loggedPlays(user, await this.activityLogStops(user));
+    }
+
+    /**
+     * This server's log names users by their internal row number (`"1"`), not by
+     * the 32-hex id `/Users` reports and every other Emby route expects. So the
+     * rows are matched positionally against the account list, which is what the
+     * live check found: 131 stops, every one `UserId: "1"`, for the single account
+     * that library has. Comparing ids as they arrive drops all of them silently,
+     * because an empty history looks like an answer.
+     *
+     * Positional is not identity. With more than one Emby user this attributes
+     * every row to whichever account sits at that index, which is a wrong name
+     * rather than no data; it cannot invent a play the log does not hold, and it
+     * asks for the account list only when a row really carries an ordinal.
+     */
+    protected override async logUserMatcher(
+        entries: RawActivityEntry[],
+        user: ServiceUser
+    ): Promise<(entry: RawActivityEntry) => boolean> {
+        if (!entries.some(e => typeof e.UserId === 'string' && /^\d+$/.test(e.UserId))) {
+            return entry => this.activityLogUserMatches(entry, user);
+        }
+        const ordinal = (await this.listUsers()).findIndex(u => u.id === user.id) + 1;
+        return entry => ordinal >= 1 && Number(entry.UserId) === ordinal;
     }
 }

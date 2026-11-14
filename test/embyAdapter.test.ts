@@ -40,9 +40,12 @@ const config: MultiUserServiceConfig = {
 const USERS = fixture('users.json') as { Id: string }[];
 const USER_ID = USERS[0]!.Id;
 
-/** The activity log's own `UserId` field. Emby logs the numeric account id here
- *  while `/Users` and every per-user read use the 32-hex GUID, so a history test
- *  that assumed one was the other would silently match nothing. */
+/** The activity log's own `UserId` field, exactly as the capture holds it: the
+ *  numeric account row, while `/Users` and every per-user read use the 32-hex
+ *  GUID. The fixture keeps that difference rather than normalising it away, and
+ *  the history tests below use the captured rows unmodified, because a test that
+ *  restamped them to the GUID would have passed through the bug this found: on a
+ *  live server every one of those rows was dropped and history answered empty. */
 const LOG_USER_ID = (fixture('activity-log.json') as { Items: { UserId: string }[] }).Items[0]!.UserId;
 
 /** The routes the adapter reads, keyed exactly as it builds them. */
@@ -57,9 +60,9 @@ const routesBase: Record<string, unknown> = {
         fixture('items-library.json')
 };
 
-/** The log, re-stamped to the user the adapter asks for: see LOG_USER_ID. */
 const LOG_ITEMS = (fixture('activity-log.json') as { Items: Record<string, unknown>[] }).Items;
-const LOG_ROWS = LOG_ITEMS.map(row => ({ ...row, UserId: USER_ID }));
+/** The captured rows, unmodified: `UserId` stays the numeric account id. */
+const LOG_ROWS = LOG_ITEMS;
 /** The ids the adapter asks back by, in its own order: every logged item that is
  *  not already present, newest stop first. */
 const LOG_IDS = [...new Set(LOG_ITEMS.map(r => String(r.ItemId)))];
@@ -81,6 +84,12 @@ const routes: Record<string, unknown> = {
 const adapter = () => new EmbyAdapter(config, serving(routes));
 const user = { id: USER_ID, name: 'Someone' };
 void LOG_USER_ID;
+
+/** A log whose rows carry a different `UserId` than the one asked about. */
+const logWithUser = (userId: string): Record<string, unknown> => ({
+    ...routes,
+    [LOG_ROUTE]: { Items: LOG_ROWS.map(r => ({ ...r, UserId: userId })), TotalRecordCount: LOG_ROWS.length }
+});
 
 /** Every capability guard, as one row, so an accidental inheritance is visible. */
 const CAPABILITIES = {
@@ -192,6 +201,23 @@ describe('EmbyAdapter', () => {
         // Newest first, as `get_playback` promises.
         const dates = entries.map(e => e.lastPlayed ?? '');
         expect([...dates].sort().reverse()).toEqual(dates);
+    });
+
+    it('keeps the rows this account logged, though the log names it by number', async () => {
+        // The capture's rows carry `UserId: "1"`, the internal account row, while
+        // `user.id` is the GUID `/Users` reports. Matching those two as equal was
+        // every Emby history answer being empty on a server with 131 logged stops.
+        expect(LOG_USER_ID).toMatch(/^\d+$/);
+        expect(LOG_USER_ID).not.toBe(USER_ID);
+        const entries = await new EmbyAdapter(config, serving(logWithUser(LOG_USER_ID))).getWatchHistory(user);
+        expect(entries.length).toBeGreaterThan(0);
+    });
+
+    it('drops another account\'s rows rather than claiming them', async () => {
+        // Positional matching still has to refuse a row for an account that is not
+        // this one; with the only user asked about, ordinal 2 belongs to nobody.
+        const entries = await new EmbyAdapter(config, serving(logWithUser('2'))).getWatchHistory(user);
+        expect(entries).toEqual([]);
     });
 
     it('never asks a played filter it cannot trust', async () => {

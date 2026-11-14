@@ -73,7 +73,7 @@ the log with this server's own event names, and `UserData.Played` is not trusted
 the way Jellyfin's is. A filter that answers 200 with the unfiltered set is worse
 than a 400: it reads as "nobody has watched anything".
 
-## Four things its API does not say out loud
+## Five things its API does not say out loud
 
 1. **`/System/Info/Public` carries no product name.** Jellyfin's discovery
    predicate keys on `ProductName === 'Jellyfin Server'`, a string this server
@@ -92,6 +92,13 @@ than a 400: it reads as "nobody has watched anything".
    played filter above prove it. Any parameter this adapter sends on Emby's
    behalf has to be one a real Emby answered, because a wrong name returns an
    answer rather than an error.
+5. **The activity log names users by their internal account row.** Every one of
+   the 131 logged stops carries `UserId: "1"`, while `/Users` reports that same
+   account as a 32-hex GUID, and the log ignores a `userId=` set to that GUID
+   (it answers the full set either way). So the two id spaces do not meet even
+   inside one server. Comparing them directly was every Emby history answer being
+   empty on a server with real play data; see item 5 of the "On Emby" section in
+   [Tools](tools.md) for what the adapter does instead.
 
 ## Accuracy note
 

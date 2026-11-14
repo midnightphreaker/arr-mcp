@@ -1400,6 +1400,12 @@ Jellyfin does:
   `marked_played`.
 - **`active` reads resumable items from the older per-user route.** Emby has no
   `/UserItems/Resume`, so this asks `/Users/{id}/Items/Resume`.
+- **The log names its users differently, and that is invisible in a fixture.** Its
+  `UserId` is the internal account row (`"1"`), not the 32-hex id `/Users` reports
+  and every other Emby route expects. Rows are therefore matched against the
+  account list by position rather than compared as ids. With one user that is exact;
+  with several it attributes every play to whichever account sits at that index, so a
+  household asking about a second person should read those rows as unattributed.
 
 Because the marked-played half does not exist, a log read that fails leaves Emby
 history empty rather than partly answered. `get_library` still reports per-item
