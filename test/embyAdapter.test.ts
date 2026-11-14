@@ -81,6 +81,32 @@ const routes: Record<string, unknown> = {
     ...Object.fromEntries([...LOG_IDS, LOG_IDS.join(',')].map(id => [`${LOGGED_ITEMS_PREFIX}${id}&Fields=UserData`, { Items: [] }]))
 };
 
+/** A stand-in for an Emby that answers 500 when asked to resolve more than
+ *  `limit` ids in one request, which is what 4.10 does past 46. Records the size
+ *  of every id page it was sent. */
+const stubIdLimit = (count: number, limit: number, asked: number[]) =>
+    (async (input: string | URL | Request) => {
+        const url = new URL(input instanceof Request ? input.url : String(input));
+        const path = `${url.pathname}${url.search}`;
+        if (path === LOG_ROUTE) return jsonResponse({ Items: rows(count), TotalRecordCount: count });
+        if (path === '/Users') return jsonResponse([{ Id: USER_ID, Name: 'Someone' }]);
+        if (!path.startsWith(LOGGED_ITEMS_PREFIX)) return jsonResponse([]);
+        const ids = new URLSearchParams(url.search).get('ids')!.split(',');
+        asked.push(ids.length);
+        if (ids.length > limit) return new Response('Unrecognized Guid format.', { status: 500 });
+        return jsonResponse({ Items: ids.map(id => ({ Id: id, Name: `Item ${id}`, Type: 'Episode', RunTimeTicks: 1_000_000_000, UserData: { Played: true } })) });
+    }) as unknown as typeof fetch;
+
+/** `count` logged stops for one account, newest first by construction. */
+const rows = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+        Name: `Stop ${i}`,
+        Type: 'playback.stop',
+        ItemId: String(1000 + i),
+        Date: `2026-11-${String((i % 9) + 1).padStart(2, '0')}T10:00:00Z`,
+        UserId: LOG_USER_ID
+    }));
+
 const adapter = () => new EmbyAdapter(config, serving(routes));
 const user = { id: USER_ID, name: 'Someone' };
 void LOG_USER_ID;
@@ -255,6 +281,36 @@ describe('EmbyAdapter', () => {
             season: 2,
             episode: 2
         });
+    });
+
+    it('resolves logged ids in pages this server answers', async () => {
+        // Emby 4.10 returns **500** for an `ids=` list longer than 46 (measured
+        // live: 46 resolves, 47 fails, repeatably). The shared default of 100 put
+        // every logged id in one request, so a library with real play history got
+        // none: the whole read failed as an upstream error rather than a page-size
+        // bug. Both adapters below face the same stubbed server and differ only in
+        // that number, which is what makes this a difference rather than a tautology.
+        const at = async (chunk?: number) => {
+            const asked: number[] = [];
+            const adapter = new EmbyAdapter(
+                config,
+                stubIdLimit(90, 46, asked),
+                chunk === undefined ? {} : { loggedItemsChunk: chunk }
+            );
+            return { entries: await adapter.getWatchHistory(user), asked };
+        };
+
+        const fixed = await at();
+        expect(Math.max(...fixed.asked)).toBeLessThanOrEqual(46);
+        expect(fixed.entries).toHaveLength(90);
+
+        // The oversized page reaches the server and fails, and its rows are lost:
+        // history answers 90 either way, but only because the fixed page size never
+        // asks a question this server refuses. Without per-page tolerance below, a
+        // single failed chunk would fail the whole read instead.
+        const widened = await at(100);
+        expect(widened.asked).toEqual([90]);
+        expect(widened.entries.every(e => e.source === 'activity_log')).toBe(true);
     });
 
     it('never asks a played filter it cannot trust', async () => {

@@ -1400,6 +1400,8 @@ Jellyfin does:
   `marked_played`. A logged id resolves to the **episode** that was stopped, whose
   row carries the series title and coordinates, so those rows are episodes and films
   only; a stop that names something else in the log (a library event) is dropped.
+  Those rows are also resolved in pages of 40, because this server refuses to resolve
+  more than 46 ids at once and would otherwise fail the whole read.
 - **`active` reads resumable items from the older per-user route.** Emby has no
   `/UserItems/Resume`, so this asks `/Users/{id}/Items/Resume`.
 - **The log names its users differently, and that is invisible in a fixture.** Its

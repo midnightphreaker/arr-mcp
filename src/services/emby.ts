@@ -1,10 +1,10 @@
 import type { ConfigByService } from '../config/schema.ts';
 import { embyToken } from '../core/auth.ts';
 import type { PlaybackEntry, ServiceUser } from './types.ts';
-import { JellyfinAdapter, type JellyfinFamilyIdentity, type RawActivityEntry } from './jellyfin.ts';
+import { JellyfinAdapter, type FamilyOptions, type RawActivityEntry } from './jellyfin.ts';
 
 /**
- * The Emby adapter: `JellyfinAdapter` with Emby's identity and the six places
+ * The Emby adapter: `JellyfinAdapter` with Emby's identity and the seven places
  * its 4.10 differs, each one recorded in `docs/emby-probes.md` rather
  * than assumed. Everything else (the version read, the user directory,
  * sessions, Next Up, the library read, paging, fencing) is inherited unchanged,
@@ -74,6 +74,9 @@ import { JellyfinAdapter, type JellyfinFamilyIdentity, type RawActivityEntry } f
  *    dropped every row, which is how a server with real play data answered empty.
  * 6. **A stop names an episode.** Logged ids resolve to `Type: "Episode"`, so a
  *    history filter on films and series discards all of them (probes, item 6).
+ * 7. **It resolves at most 46 ids per request** (probes, item 7), where the shared
+ *    read asks for 100. At that size one oversized page failed the whole history
+ *    read with an HTTP 500 that named no cause.
  */
 
 /** Emby's own activity-log filter. The dotted type is what this server accepts;
@@ -97,63 +100,66 @@ const LIBRARY_FIELDS = 'ProviderIds,Genres';
  *  base's own set was right; this filter, not it, dropped every real play. */
 const isKnownLibraryItem = (item: { Type?: string }): boolean => item.Type === 'Episode' || item.Type === 'Movie';
 
-export class EmbyAdapter extends JellyfinAdapter {
-    constructor(config: ConfigByService['emby'], fetchImpl: typeof fetch = fetch) {
-        const identity: JellyfinFamilyIdentity = { id: 'emby', type: 'emby', label: 'Emby' };
-        super(
-            config,
-            fetchImpl,
-            identity,
-            {
-                activityLogRoute: ACTIVITY_LOG_ROUTE,
-                // Emby item ids are plain integers as strings (probes, surprise 2).
-                itemIdPattern: { pattern: /^\d+$/, shape: 'digits' },
-                libraryFields: LIBRARY_FIELDS,
-                // Jellyfin's marked-played read does not exist here: Emby has no
-                // `/UserPlayedItems`, and `Filters=IsPlayed` is accepted and
-                // ignored while reporting `Played: false` on every row (probes
-                // P4), so asking it would merge the whole library into the log
-                // rows as items nobody watched. `undefined` means there is no such
-                // read, which the base reports as a missing half rather than an
-                // empty answer; history here comes from the activity log alone.
-                markedPlayedPath: () => undefined,
-                // Emby spells this parameter `UserId`. The point is not the
-                // capital: a name it does not know is ignored rather than rejected
-                // (probes P3), so Jellyfin's spelling would return one user's list
-                // for every user asked about.
-                nextUpPath: userId => `/Shows/NextUp?UserId=${encodeURIComponent(userId)}`,
-                loggedItemIsKnown: isKnownLibraryItem,
-                // The older per-user resume route: `/UserItems/Resume` is the
-                // documented modern one and was never captured here.
-                resumePath: userId => `/Users/${encodeURIComponent(userId)}/Items/Resume?Limit=500`,
+/** This server's own seams, merged under anything a caller overrides. */
+const EMBY_OPTIONS: FamilyOptions = {
+    activityLogRoute: ACTIVITY_LOG_ROUTE,
 
-                // Same header Emby accepts (probes P1), different remedy text: a
-                // 401 that sends an Emby user to a Jellyfin dashboard tells them
-                // nothing, so this names where an Emby key is actually made.
-                auth: key => ({
-                    ...embyToken(key),
-                    remedy: 'The API key is wrong. Create one under Emby Dashboard → Advanced → Security.'
-                }),
-                // Everything the header lists as not implemented. Capability in
-                // this codebase is a method's existence, so inheriting the base
-                // would claim all of it; naming each one here is what keeps
-                // "no fixture, no capability" true for an adapter that reuses
-                // the code rather than writing its own.
-                unclaimedReads: [
-                    'getMediaDetails',
-                    'getScanState',
-                    'search',
-                    'startLibraryScan',
-                    'listUserMusic',
-                    'listUserSeasons',
-                    'readEpisodeMetadata',
-                    'readMovieMetadata',
-                    'readWatchTarget',
-                    'repairMetadata',
-                    'setWatched'
-                ]
-            }
-        );
+    // Emby item ids are plain integers as strings (probes, surprise 2).
+    itemIdPattern: { pattern: /^\d+$/, shape: 'digits' },
+    libraryFields: LIBRARY_FIELDS,
+    // 46 ids is as many as this server will resolve in one request; see
+    // `LOGGED_ITEMS_CHUNK` for the measurement. Anything above it answers
+    // 500, which would silently cost history its rows.
+    loggedItemsChunk: 40,
+    // Jellyfin's marked-played read does not exist here: Emby has no
+    // `/UserPlayedItems`, and `Filters=IsPlayed` is accepted and
+    // ignored while reporting `Played: false` on every row (probes
+    // P4), so asking it would merge the whole library into the log
+    // rows as items nobody watched. `undefined` means there is no such
+    // read, which the base reports as a missing half rather than an
+    // empty answer; history here comes from the activity log alone.
+    markedPlayedPath: () => undefined,
+    // Emby spells this parameter `UserId`. The point is not the
+    // capital: a name it does not know is ignored rather than rejected
+    // (probes P3), so Jellyfin's spelling would return one user's list
+    // for every user asked about.
+    nextUpPath: userId => `/Shows/NextUp?UserId=${encodeURIComponent(userId)}`,
+    loggedItemIsKnown: isKnownLibraryItem,
+    // The older per-user resume route: `/UserItems/Resume` is the
+    // documented modern one and was never captured here.
+    resumePath: userId => `/Users/${encodeURIComponent(userId)}/Items/Resume?Limit=500`,
+
+    // Same header Emby accepts (probes P1), different remedy text: a
+    // 401 that sends an Emby user to a Jellyfin dashboard tells them
+    // nothing, so this names where an Emby key is actually made.
+    auth: key => ({
+    ...embyToken(key),
+    remedy: 'The API key is wrong. Create one under Emby Dashboard → Advanced → Security.'
+    }),
+    // Everything the header lists as not implemented. Capability in
+    // this codebase is a method's existence, so inheriting the base
+    // would claim all of it; naming each one here is what keeps
+    // "no fixture, no capability" true for an adapter that reuses
+    // the code rather than writing its own.
+    unclaimedReads: [
+        'getMediaDetails',
+        'getScanState',
+        'search',
+        'startLibraryScan',
+        'listUserMusic',
+        'listUserSeasons',
+        'readEpisodeMetadata',
+        'readMovieMetadata',
+        'readWatchTarget',
+        'repairMetadata',
+        'setWatched'
+    ]
+};
+
+export class EmbyAdapter extends JellyfinAdapter {
+    constructor(config: ConfigByService['emby'], fetchImpl: typeof fetch = fetch, overrides: FamilyOptions = {}) {
+        // The identity is Emby's own and not overridable; only the seams are.
+        super(config, fetchImpl, { id: 'emby', type: 'emby', label: 'Emby' }, { ...EMBY_OPTIONS, ...overrides });
     }
 
     /**

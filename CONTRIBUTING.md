@@ -304,7 +304,7 @@ service in no slot at all is a different product.
 
 - **Emby: more testers.** The adapter has shipped ([#500](../../issues/500)), as
   predicted: `src/services/emby.ts` is the Jellyfin adapter with Emby's identity
-  and the six places its API differs. Every route it reads was captured from a
+  and the seven places its API differs. Every route it reads was captured from a
   live Emby Server 4.10.2.0 and is contracted in `test/contract.test.ts`; no spec
   can watch them, since Emby publishes its OpenAPI document from the server rather
   than at a fetchable URL, so only a recapture catches Emby changing one. That one

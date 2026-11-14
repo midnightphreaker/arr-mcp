@@ -132,7 +132,12 @@ const newestStopPerItem = (entries: RawActivityEntry[]): RawActivityEntry[] => {
     return [...newest.values()];
 };
 
-/** Ids per `/Items?ids=` read, keeping the URL well short of proxy limits. */
+/** Ids per `/Items?ids=` read, keeping the URL well short of proxy limits.
+ *  Overridable because this ceiling is a property of the server being asked: Emby
+ *  4.10 answers **500 Internal Server Error** for an `ids=` list longer than 46
+ *  (live-confirmed 2026-11-14: 46 ok, 47 fails, repeatably, and every smaller
+ *  chunk resolves fully), so at 100 its history read lost one whole request to a
+ *  transport error that looks like an upstream fault rather than a page-size bug. */
 const LOGGED_ITEMS_CHUNK = 100;
 
 const HISTORY_TYPES = new Set(['Episode', 'Movie']);
@@ -212,7 +217,7 @@ const numericId = (value: string | undefined): number | undefined => {
  * `id` because `id` is the audit and log identity (`emby/attic` when named) and
  * must never be interpolated into prose that names a product.
  */
-export type JellyfinFamilyIdentity = { id: string; type: ServiceId; label: string };
+type JellyfinFamilyIdentity = { id: string; type: ServiceId; label: string };
 
 /**
  * The reads this family knows how to do, and the only way a derived adapter can
@@ -255,7 +260,7 @@ const ALL_FAMILY_READS: readonly JellyfinFamilyRead[] = [
 ];
 
 /** The seams where Emby's 4.10 differs from Jellyfin, each documented at its capture. */
-type FamilyOptions = {
+export type FamilyOptions = {
     /** The activity-log read for `getWatchHistory`, event vocabulary included. */
     activityLogRoute?: string;
     /** Whether a logged item is a history row at all. Emby needs it: its log
@@ -277,6 +282,8 @@ type FamilyOptions = {
     markedPlayedPath?: (userId: string) => string | undefined;
     /** The next-up read. Only its parameter name differs between the two. */
     nextUpPath?: (userId: string) => string;
+    /** How many ids to resolve per request. See `LOGGED_ITEMS_CHUNK`. */
+    loggedItemsChunk?: number;
     /** The credential strategy, which carries the 401 remedy with it. Emby accepts
      *  the same header (probes P1) but its key is made somewhere else, so an
      *  operator told to open a Jellyfin dashboard they do not run learns nothing. */
@@ -312,6 +319,7 @@ export class JellyfinAdapter
     readonly #libraryFields: string;
     readonly #markedPlayedPath: (userId: string) => string | undefined;
     readonly #nextUpPath: (userId: string) => string;
+    readonly #loggedItemsChunk: number;
 
     constructor(
         // The two media servers of this family share the same block shape
@@ -338,6 +346,7 @@ export class JellyfinAdapter
                     '&Filters=IsPlayed&IncludeItemTypes=Episode,Movie&Recursive=true&Limit=500&Fields=UserData')
                 : opts.markedPlayedPath;
         this.#nextUpPath = opts.nextUpPath ?? (userId => `/Shows/NextUp?userId=${encodeURIComponent(userId)}`);
+        this.#loggedItemsChunk = Math.max(1, opts.loggedItemsChunk ?? LOGGED_ITEMS_CHUNK);
         const unclaimed = opts.unclaimedReads ?? [];
         const auth = opts.auth ?? (key => embyToken(key));
         this.#http = new ServiceHttp(identity.id, config, auth(config.api_key), fetchImpl);
@@ -603,12 +612,18 @@ export class JellyfinAdapter
         if (stops.length === 0) return [];
 
         const ids = stops.map(e => e.ItemId as string);
+        // One page's failure costs that page and nothing else. The rows it held are
+        // then treated as removed from the library, which is a conservative reading
+        // (their own log entry is all they keep), and better than the whole read
+        // failing because one chunk of ids did not resolve.
         const pages = await Promise.all(
-            Array.from({ length: Math.ceil(ids.length / LOGGED_ITEMS_CHUNK) }, (_, i) =>
-                this.#http.get<RawItemsPage>(
-                    `/Items?userId=${encodeURIComponent(user.id)}` +
-                        `&ids=${ids.slice(i * LOGGED_ITEMS_CHUNK, (i + 1) * LOGGED_ITEMS_CHUNK).join(',')}&Fields=UserData`
-                )
+            Array.from({ length: Math.ceil(ids.length / this.#loggedItemsChunk) }, (_, i) =>
+                this.#http
+                    .get<RawItemsPage>(
+                        `/Items?userId=${encodeURIComponent(user.id)}` +
+                            `&ids=${ids.slice(i * this.#loggedItemsChunk, (i + 1) * this.#loggedItemsChunk).join(',')}&Fields=UserData`
+                    )
+                    .catch(() => ({ Items: [] }))
             )
         );
         const byId = new Map(pages.flatMap(p => p.Items ?? []).map(item => [item.Id, item]));
@@ -850,7 +865,7 @@ export class JellyfinAdapter
      * The pattern is a constructor argument rather than a literal: Emby's item
      * ids are numeric strings while its user and server ids are 32-hex, so
      * Jellyfin's rule would refuse every real Emby id (docs/emby-probes.md,
-     * item 2 of "Six things its API does not say out loud"). The message names
+     * item 2 of "Seven things its API does not say out loud"). The message names
      * the product from `#label`, not from this file's name, because an Emby user
      * must not be told to look in Jellyfin.
      */

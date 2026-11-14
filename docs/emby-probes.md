@@ -73,7 +73,7 @@ the log with this server's own event names, and `UserData.Played` is not trusted
 the way Jellyfin's is. A filter that answers 200 with the unfiltered set is worse
 than a 400: it reads as "nobody has watched anything".
 
-## Six things its API does not say out loud
+## Seven things its API does not say out loud
 
 1. **`/System/Info/Public` carries no product name.** Jellyfin's discovery
    predicate keys on `ProductName === 'Jellyfin Server'`, a string this server
@@ -105,6 +105,11 @@ than a 400: it reads as "nobody has watched anything".
    every real play, because nothing in an item list is ever asked to be an episode.
    Both this and the item above were found only by running the tool against a live
    server: each fixture held the value that made the wrong code look right.
+7. **An `ids=` list longer than 46 answers 500.** Measured directly (46 resolve, 47
+   fails, repeatably; every smaller chunk resolves fully). The shared read asks for
+   100 at a time, so a household with more than 46 items in its play history lost the
+   whole read to what looked like an upstream fault. This adapter asks 40 per request,
+   and one page that still fails costs only its own rows.
 
 ## Accuracy note
 
