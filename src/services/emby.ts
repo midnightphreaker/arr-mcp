@@ -43,7 +43,7 @@ import { JellyfinAdapter, type FamilyOptions, type RawActivityEntry } from './je
  *   read would claim an entire collection is unmanaged or absent, which is the
  *   one thing `musicGathered` exists to prevent.
  *
- * ## The five differences, in order of how much they cost
+ * ## The nine differences, in order of how much they cost
  *
  * 1. **Watch history has one source.** `/Users/{id}/PlayedItems` is 404 and
  *    `Filters=Played` / `Filters=IsPlayed` are **accepted and ignored**, still
@@ -54,29 +54,37 @@ import { JellyfinAdapter, type FamilyOptions, type RawActivityEntry } from './je
  *    TotalRecordCount }` and named with **dotted event types**: `playback.stop`,
  *    where Jellyfin's filter is `type=VideoPlaybackStopped`.
  * 2. **Item ids are numeric strings.** `"24952"`, not 32 hex, while user and
- *    server ids *are* 32-hex GUIDs (probes, surprise 2). The inherited id guard
- *    would refuse every real Emby id, so the pattern is passed in. It matters
- *    even though no write uses it here: a refusal that tells an Emby user their
- *    own ids are wrong is worse than the bug it prevents.
+ *    server ids *are* 32-hex GUIDs (probes, item 2). The inherited id guard would
+ *    refuse every real Emby id, so the pattern is passed in. It matters even though
+ *    no write uses it here: a refusal that tells an Emby user their own ids are
+ *    wrong is worse than the bug it prevents.
  * 3. **The library read asks for two fields fewer.** `OriginalTitle` and
  *    `RecursiveItemCount` were never captured, and Emby silently ignores a
  *    parameter it does not know, so an uncaptured one cannot be claimed to work.
  *    Their absence degrades to what the base already does with them missing: no
  *    aliases, and no `empty` marker on a series.
- * 4. **The resumable read is the older route.** `/UserItems/Resume` is
- *    unproven; `/Users/{id}/Items/Resume` answered 200 and correctly shaped. It
- *    is empty on the captured instance, which `docs/tools.md` marks as
- *    unverified rather than treating as a working answer.
- * 5. **Its activity log names users by their internal account row**, `"1"`, not by
+ * 4. **Its activity log names users by their internal account row**, `"1"`, not by
  *    the GUID every other Emby route uses, and it ignores a `userId=` set to that
- *    GUID (probes, item 5; found live rather than in a fixture, because the
- *    captured rows held that value either way). Comparing the two id spaces
- *    dropped every row, which is how a server with real play data answered empty.
- * 6. **A stop names an episode.** Logged ids resolve to `Type: "Episode"`, so a
+ *    GUID (probes, item 5; found live rather than in a fixture, because the captured
+ *    rows held that value either way). Comparing the two id spaces dropped every row,
+ *    which is how a server with real play data answered empty.
+ * 5. **A stop names an episode.** Logged ids resolve to `Type: "Episode"`, so a
  *    history filter on films and series discards all of them (probes, item 6).
- * 7. **It resolves at most 46 ids per request** (probes, item 7), where the shared
- *    read asks for 100. At that size one oversized page failed the whole history
- *    read with an HTTP 500 that named no cause.
+ * 6. **It resolves at most 46 ids per request** (probes, item 7), where the shared
+ *    read asks for 100. At that size one oversized page failed the whole history read
+ *    with an HTTP 500 that named no cause.
+ * 7. **Neither resumable route works; the library filter does.** `/UserItems/Resume`
+ *    is 404 and `/Users/{id}/Items/Resume` returns nothing on an instance whose items
+ *    do carry resume positions (probes, item 8). This asks the library read with
+ *    `Filters=IsResumable`, which narrows correctly under a control.
+ * 8. **Next Up answers nothing unless a series is named.** Unscoped it returns an
+ *    empty page for an account with five partially-watched series; with
+ *    `SeriesId=<one>` the same route returns that show's queue (probes, item 9).
+ *    Asking per series costs a request per show, so this keeps the honest empty
+ *    answer until that trade is decided.
+ * 9. **Discovery has nothing to match on, and a wrong key is a 500.** See
+ *    `docs/emby-probes.md` items 1 and 3; both are handled outside this list, in
+ *    the discovery catalog and by resolving users before any per-user read.
  */
 
 /** Emby's own activity-log filter. The dotted type is what this server accepts;
