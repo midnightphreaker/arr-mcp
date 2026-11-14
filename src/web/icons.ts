@@ -46,6 +46,14 @@ export const ICONS: Record<ServiceId, string> = {
             '<path d="M6.5 11.5h4M13.5 11.5h4"/>'
     ),
     jellyfin: draw('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m10 8.5 6 3.5-6 3.5z"/>'),
+    // The same category as Jellyfin and Plex, so the same grammar: a browsable
+    // library over a title you play. It differs from both by where the shelf is
+    // (below, not through the middle) and by putting the play mark on it rather
+    // than beside it, which keeps all three readable at 20px side by side.
+    emby: draw(
+        '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 6.5h10M9.5 9.5h5"/>' +
+            '<path d="M3 13.5h18"/><path d="m10 15.5 5 2-5 2z"/>'
+    ),
     // Jellyfin is a screen mid-playback; this one is the server behind it, a
     // library you browse (the two lines) over a title you play (the triangle),
     // split by one shelf. Not Plex's arc-and-triangle mark, which this avoids.

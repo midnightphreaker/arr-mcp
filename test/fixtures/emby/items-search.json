@@ -1,0 +1,31 @@
+{
+  "Items": [
+    {
+      "Name": "Title 1",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25061",
+      "RunTimeTicks": 69623040000,
+      "ProviderIds": {
+        "Imdb": "tt0088763",
+        "Tmdb": "105"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 2",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25147",
+      "RunTimeTicks": 70982720000,
+      "ProviderIds": {
+        "Tmdb": "196",
+        "Imdb": "tt0099088"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "MediaType": "Video"
+    }
+  ],
+  "TotalRecordCount": 2
+}

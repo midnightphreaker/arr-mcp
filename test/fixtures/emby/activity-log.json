@@ -1,0 +1,113 @@
+{
+  "Items": [
+    {
+      "Id": 157,
+      "Name": "Title",
+      "Type": "playback.start",
+      "ItemId": "48559",
+      "Date": "2026-11-14T06:09:28.0250000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 156,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "48509",
+      "Date": "2026-11-14T06:09:24.5550000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 155,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "48509",
+      "Date": "2026-11-14T05:55:56.6160000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 154,
+      "Name": "Title",
+      "Type": "playback.start",
+      "ItemId": "48509",
+      "Date": "2026-11-14T05:24:19.9260000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 153,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "48484",
+      "Date": "2026-11-14T05:24:11.4010000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 152,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "48484",
+      "Date": "2026-11-14T04:47:38.8200000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 151,
+      "Name": "Title",
+      "Type": "playback.start",
+      "ItemId": "48484",
+      "Date": "2026-11-14T04:41:01.5110000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 149,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "39675",
+      "Date": "2026-11-13T18:49:25.6600000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 148,
+      "Name": "Title",
+      "Type": "playback.start",
+      "ItemId": "39675",
+      "Date": "2026-11-13T18:48:55.9560000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 147,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "39675",
+      "Date": "2026-11-13T17:52:25.7670000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 146,
+      "Name": "Title",
+      "Type": "playback.start",
+      "ItemId": "39675",
+      "Date": "2026-11-13T17:01:13.1380000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    },
+    {
+      "Id": 145,
+      "Name": "Title",
+      "Type": "playback.stop",
+      "ItemId": "39660",
+      "Date": "2026-11-13T17:00:56.4340000Z",
+      "UserId": "1",
+      "Severity": "Info"
+    }
+  ],
+  "TotalRecordCount": 12
+}

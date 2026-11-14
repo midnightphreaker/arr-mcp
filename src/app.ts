@@ -95,6 +95,10 @@ const ROLES: readonly (readonly [ServiceId, string])[] = [
     ['profilarr', 'Profilarr quality profiles'],
     ['bazarr', 'Bazarr subtitles'],
     ['jellyfin', 'Jellyfin playback'],
+    // The role is identical to Jellyfin's, because the adapter is: Emby is what
+    // Jellyfin was forked from. Named separately so a model reading its own
+    // instructions is not told the word "Jellyfin" for a server it does not run.
+    ['emby', 'Emby playback'],
     ['plex', 'Plex playback'],
     ['seerr', 'Seerr requests'],
     ['grimmory', 'Grimmory books'],

@@ -1,0 +1,35 @@
+{
+  "SystemUpdateLevel": "Release",
+  "OperatingSystemDisplayName": "Unix",
+  "HasPendingRestart": true,
+  "IsShuttingDown": false,
+  "HasImageEnhancers": true,
+  "OperatingSystem": "Linux",
+  "SupportsLibraryMonitor": true,
+  "SupportsLocalPortConfiguration": true,
+  "SupportsWakeServer": false,
+  "WebSocketPortNumber": 8096,
+  "CompletedInstallations": [],
+  "CanSelfRestart": true,
+  "CanSelfUpdate": false,
+  "CanLaunchWebBrowser": false,
+  "HttpServerPortNumber": 8096,
+  "SupportsHttps": false,
+  "HttpsPortNumber": 8920,
+  "HasUpdateAvailable": false,
+  "SupportsAutoRunAtStartup": false,
+  "HardwareAccelerationRequiresPremiere": true,
+  "WakeOnLanInfo": [
+    {
+      "MacAddress": "66816523D2BF",
+      "BroadcastAddress": "172.18.255.255",
+      "Port": 9
+    }
+  ],
+  "IsInMaintenanceMode": false,
+  "LocalAddresses": [],
+  "RemoteAddresses": [],
+  "ServerName": "Media Server",
+  "Version": "4.10.2.0",
+  "Id": "035a2a4a48f94830ac51e586bab5fb34"
+}

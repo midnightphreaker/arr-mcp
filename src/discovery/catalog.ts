@@ -224,4 +224,15 @@ export const CATALOG: readonly CatalogEntry[] = [
     }
 ];
 
-export const UNDISCOVERABLE: readonly Undiscoverable[] = [];
+/**
+ * Emby is not discoverable by response content, only by its own container name.
+ * `/System/Info/Public` on 4.10.2.0 answers without a product identifier at all
+ * (planning/probes.md, surprise 1): `ServerName`, `Version` and ids, nothing that
+ * says which MediaBrowser-family server it is. Jellyfin's entry above keys on
+ * `ProductName === 'Jellyfin Server'`, a string Emby never sends, so copying it
+ * would find nothing and any looser match would name strangers. A wrong guess the
+ * user saves is worse than a miss.
+ */
+export const UNDISCOVERABLE: readonly Undiscoverable[] = [
+    { type: 'emby', reason: 'no product identifier in an unauthenticated response; /System/Info/Public carries only ServerName, Version and ids' }
+];

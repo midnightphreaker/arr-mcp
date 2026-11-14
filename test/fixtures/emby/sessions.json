@@ -1,0 +1,32 @@
+[
+  {
+    "PlayState": {
+      "PositionTicks": 0,
+      "CanSeek": true,
+      "IsPaused": false
+    },
+    "UserId": "26ec3c90105e4da1b5d1456aed14d94d",
+    "UserName": "user1",
+    "Client": "Plezy%20Android%20TV",
+    "LastActivityDate": "2026-11-14T06:30:11.8840586Z",
+    "DeviceName": "Device 1",
+    "NowPlayingItem": {
+      "Name": "Title 1",
+      "Id": "48559",
+      "RunTimeTicks": 26378565000,
+      "IndexNumber": 1,
+      "ParentIndexNumber": 3,
+      "ProviderIds": {
+        "Tvdb": "367817",
+        "sonarr": "5142",
+        "TvMaze": "897173"
+      },
+      "Type": "Episode",
+      "SeriesName": "Series 1",
+      "SeriesId": "27673",
+      "MediaType": "Video"
+    },
+    "DeviceId": "device-1",
+    "ApplicationVersion": "0.0.0"
+  }
+]

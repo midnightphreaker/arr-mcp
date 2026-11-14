@@ -568,6 +568,20 @@ function anonymiseWhisparrRootFolder(row: Row, index: number): Row {
 // or the joins the adapter's tests rely on break. See G2.
 const mapPlexAccountId = createAccountIdMapper();
 
+/**
+ * An Emby user list, anonymised.
+ *
+ * `Name` on this endpoint is an account, so it goes the same way Jellyfin's
+ * does. `ServerId` and `Policy`/`Configuration` are kept: the adapter reads none
+ * of them, but they are what tells a future reader that this is Emby's shape and
+ * not a copy of Jellyfin's `/Users` (they differ: no `EnableUserView`, and
+ * `Prefix`/`ServerId` are present).
+ */
+const anonymiseEmbyUsers = (body: unknown): unknown =>
+    Array.isArray(body)
+        ? (body as Row[]).map((u, i) => ({ ...u, Name: replaceIfString(u.Name, `User ${i + 1}`) }))
+        : body;
+
 const ENDPOINTS: Record<ServiceId, Endpoint[]> = {
     radarr: [
         { name: 'system-status', path: '/api/v3/system/status' },
@@ -1000,6 +1014,122 @@ const ENDPOINTS: Record<ServiceId, Endpoint[]> = {
                     : `/Shows/${seriesId}/Episodes?userId=${userId}&EnableUserData=true&EnableImages=false&Fields=Path`;
             },
             anonymise: neutraliseWatchState
+        }
+    ],
+    // Emby is captured as a variant of Jellyfin's route set, and the differences
+    // below are the reason it cannot simply reuse it (planning/probes.md):
+    //   * no `/UserPlayedItems`, and `Filters=Played` is accepted but ignored;
+    //   * the activity log wraps rows in `{ Items, TotalRecordCount }` and names
+    //     events `playback.stop` rather than Jellyfin's `VideoPlaybackStopped`;
+    //   * item ids are numeric strings while user and server ids are 32-hex.
+    emby: [
+        { name: 'system-info', path: '/System/Info' },
+        {
+            // The discovery probe. Captured because it has no `ProductName`, which
+            // is exactly why the Jellyfin identify predicate cannot be copied.
+            name: 'system-info-public',
+            path: '/System/Info/Public',
+            anonymise: body => {
+                const o = isRow(body) ? body : undefined;
+                return o === undefined
+                    ? body
+                    : { ...o, ServerName: replaceIfString(o.ServerName, 'Media Server') };
+            }
+        },
+        { name: 'users', path: '/Users', anonymise: anonymiseEmbyUsers },
+        {
+            name: 'sessions',
+            // Trimmed like Jellyfin's: image tags and blurhashes are not read, and
+            // a thumb URL here embeds an account id.
+            path: '/Sessions?PlayStateActive=true',
+            anonymise: body => {
+                if (!Array.isArray(body)) return body;
+                return (body as Row[]).map((s, i) => ({
+                    ...s,
+                    DeviceName: replaceIfString(s.DeviceName, `Device ${i + 1}`),
+                    UserName: replaceIfString(s.UserName, 'User 1'),
+                    RemoteEndPoint: undefined,
+                    NowPlayingItem: isRow(s.NowPlayingItem)
+                        ? { ...s.NowPlayingItem, Name: replaceIfString(s.NowPlayingItem.Name, `Title ${i + 1}`) }
+                        : s.NowPlayingItem
+                }));
+            }
+        },
+        {
+            name: 'items-search',
+            // Must match what the adapter actually requests. `Fields=ProviderIds`
+            // is not decoration, and Emby silently ignores an unknown search
+            // parameter (`term=` returns the whole library), so this fixture is the
+            // record of the spelling that works.
+            path: '/Items?searchTerm=a&Recursive=true&IncludeItemTypes=Movie,Series&Limit=5&Fields=ProviderIds'
+        },
+        {
+            name: 'items-library',
+            path: captured => {
+                const users = captured.get('users');
+                const id = Array.isArray(users) ? (users[0] as { Id?: string } | undefined)?.Id : undefined;
+                return id === undefined
+                    ? undefined
+                    : `/Items?userId=${id}&Recursive=true&IncludeItemTypes=Movie,Series` +
+                      '&Fields=ProviderIds,Genres&EnableUserData=true&EnableImages=false&Limit=20';
+            },
+            // Emby reports `Played: false` on nearly every row of this library, so
+            // neutralising to a pattern would invent watch state the server did not
+            // send. Only names and paths are scrubbed; the flags stay as captured.
+            anonymise: body => {
+                const page = isRow(body) ? body : undefined;
+                if (!Array.isArray(page?.Items)) return body;
+                return {
+                    ...page,
+                    Items: (page.Items as Row[]).map((item, i) => ({
+                        ...item,
+                        Name: replaceIfString(item.Name, `Title ${i + 1}`),
+                        SeriesName: replaceIfString(item.SeriesName, `Series ${i + 1}`)
+                    }))
+                };
+            }
+        },
+        {
+            name: 'next-up',
+            path: captured => {
+                const users = captured.get('users');
+                const id = Array.isArray(users) ? (users[0] as { Id?: string } | undefined)?.Id : undefined;
+                return id === undefined ? undefined : `/Shows/NextUp?UserId=${id}&Limit=50&EnableImages=false`;
+            },
+            anonymise: body => {
+                const page = isRow(body) ? body : undefined;
+                if (!Array.isArray(page?.Items)) return body;
+                return {
+                    ...page,
+                    Items: (page.Items as Row[]).map((item, i) => ({
+                        ...item,
+                        Name: replaceIfString(item.Name, `Title ${i + 1}`),
+                        SeriesName: replaceIfString(item.SeriesName, `Series ${i + 1}`)
+                    }))
+                };
+            }
+        },
+        {
+            name: 'activity-log',
+            // getWatchHistory's only source on Emby. The dotted event type is the
+            // shape, not a typo of Jellyfin's `VideoPlaybackStopped`.
+            path: '/System/ActivityLog/Entries?type=playback.stop&hasUserId=true&limit=50',
+            anonymise: body => {
+                const page = isRow(body) ? body : undefined;
+                if (!Array.isArray(page?.Items)) return body;
+                return {
+                    ...page,
+                    Items: (page.Items as Row[]).map(row => ({ ...row, Name: replaceIfString(row.Name, 'Title') }))
+                };
+            }
+        },
+        {
+            // Deliberately captured even though the first version does not scan a
+            // library: it is the fixture that proves `Key: RefreshLibrary` exists
+            // while four other tasks carry Scan/Refresh in their names, which is
+            // why the adapter must match on Key and never on Name.
+            name: 'scheduled-tasks',
+            path: '/ScheduledTasks'
         }
     ],
     seerr: [

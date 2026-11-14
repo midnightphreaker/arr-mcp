@@ -1,0 +1,218 @@
+[
+  {
+    "Name": "Refresh Custom Intros",
+    "State": "Idle",
+    "Id": "9be21c934ee449269f41b7c2b4d4d1d7",
+    "Triggers": [],
+    "Description": null,
+    "Category": "Library",
+    "IsHidden": true,
+    "Key": "RefreshIntros"
+  },
+  {
+    "Name": "Refresh Emby Connect Data",
+    "State": "Idle",
+    "Id": "9120755af992e23c502f998cc55e54ac",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-14T03:53:12.5144448Z",
+      "EndTimeUtc": "2026-11-14T03:53:12.5144584Z",
+      "Status": "Completed",
+      "Name": "Refresh Emby Connect Data",
+      "Key": "RefreshAuthorizationsScheduledTask",
+      "Id": "9120755af992e23c502f998cc55e54ac"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 216000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Application",
+    "IsHidden": true,
+    "Key": "RefreshAuthorizationsScheduledTask"
+  },
+  {
+    "Name": "Refresh Guide",
+    "State": "Idle",
+    "Id": "9492d30c70f7f1bec3757c9d0a4feb45",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T15:53:12.7061601Z",
+      "EndTimeUtc": "2026-11-13T15:53:12.7085189Z",
+      "Status": "Completed",
+      "Name": "Refresh Guide",
+      "Key": "RefreshGuide",
+      "Id": "9492d30c70f7f1bec3757c9d0a4feb45"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Live TV",
+    "IsHidden": true,
+    "Key": "RefreshGuide"
+  },
+  {
+    "Name": "Refresh Internet Channels",
+    "State": "Idle",
+    "Id": "a27c54259520b2e5c509def68c8f4c45",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T14:11:51.2847132Z",
+      "EndTimeUtc": "2026-11-13T14:11:51.3693329Z",
+      "Status": "Completed",
+      "Name": "Refresh Internet Channels",
+      "Key": "RefreshInternetChannels",
+      "Id": "a27c54259520b2e5c509def68c8f4c45"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Internet Channels",
+    "IsHidden": false,
+    "Key": "RefreshInternetChannels"
+  },
+  {
+    "Name": "Refresh Users",
+    "State": "Idle",
+    "Id": "7a7448c261fa47f346b4c061a5d5c163",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T15:53:12.6653997Z",
+      "EndTimeUtc": "2026-11-13T15:53:12.6665784Z",
+      "Status": "Completed",
+      "Name": "Refresh Users",
+      "Key": "RefreshUsers",
+      "Id": "7a7448c261fa47f346b4c061a5d5c163"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Library",
+    "IsHidden": true,
+    "Key": "RefreshUsers"
+  },
+  {
+    "Name": "Scan media library",
+    "State": "Running",
+    "CurrentProgressPercentage": 71.05190839694657,
+    "Id": "6330ee8fb4a957f33981f89aa78b030f",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T17:57:19.1811505Z",
+      "EndTimeUtc": "2026-11-13T18:55:21.2959389Z",
+      "Status": "Completed",
+      "Name": "Scan media library",
+      "Key": "RefreshLibrary",
+      "Id": "6330ee8fb4a957f33981f89aa78b030f"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 432000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "RefreshLibrary"
+  },
+  {
+    "Name": "Scan Metadata Folder",
+    "State": "Idle",
+    "Id": "66ff02a80e8afc5da71945716f0f53e3",
+    "Triggers": [],
+    "Description": null,
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "ScanInternalMetadataFolderTask"
+  },
+  {
+    "Name": "TheIntroDB Media Segment Scan",
+    "State": "Idle",
+    "Id": "0d40c2044a0603eb724dfa7617c79aaa",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T14:59:59.9995819Z",
+      "EndTimeUtc": "2026-11-13T15:01:16.7554155Z",
+      "Status": "Completed",
+      "Name": "TheIntroDB Media Segment Scan",
+      "Key": "TheIntroDBMediaSegmentScan",
+      "Id": "0d40c2044a0603eb724dfa7617c79aaa"
+    },
+    "Triggers": [
+      {
+        "Type": "DailyTrigger",
+        "TimeOfDayTicks": 72000000000,
+        "MaxRuntimeTicks": 216000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Library",
+    "IsHidden": false,
+    "Key": "TheIntroDBMediaSegmentScan"
+  },
+  {
+    "Name": "Backup Credits Markers",
+    "State": "Idle",
+    "Id": "3d35fe8db3faa14eb6fa9f89186459a2",
+    "Triggers": [],
+    "Description": null,
+    "Category": "Credits Detector",
+    "IsHidden": false,
+    "Key": "CreditsBackup"
+  },
+  {
+    "Name": "Cache file cleanup",
+    "State": "Idle",
+    "Id": "241d4fcb19a1d557ee62428e411da609",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T15:53:18.2333451Z",
+      "EndTimeUtc": "2026-11-13T15:53:18.4827455Z",
+      "Status": "Completed",
+      "Name": "Cache file cleanup",
+      "Key": "DeleteCacheFiles",
+      "Id": "241d4fcb19a1d557ee62428e411da609"
+    },
+    "Triggers": [
+      {
+        "Type": "IntervalTrigger",
+        "IntervalTicks": 864000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Maintenance",
+    "IsHidden": true,
+    "Key": "DeleteCacheFiles"
+  },
+  {
+    "Name": "Change episode date added to original airdate",
+    "State": "Idle",
+    "Id": "a83932aa7d62326d7624ceb39611ca6b",
+    "LastExecutionResult": {
+      "StartTimeUtc": "2026-11-13T17:59:59.9998629Z",
+      "EndTimeUtc": "2026-11-13T18:00:00.9924701Z",
+      "Status": "Completed",
+      "Name": "Change episode date added to original airdate",
+      "Key": "TimeLordTV",
+      "Id": "a83932aa7d62326d7624ceb39611ca6b"
+    },
+    "Triggers": [
+      {
+        "Type": "DailyTrigger",
+        "TimeOfDayTicks": 180000000000
+      }
+    ],
+    "Description": null,
+    "Category": "Time Lord",
+    "IsHidden": false,
+    "Key": "TimeLordTV"
+  }
+]

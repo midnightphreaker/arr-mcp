@@ -1,0 +1,776 @@
+{
+  "Items": [
+    {
+      "Name": "Title 1",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24952",
+      "Genres": [
+        "Comedy"
+      ],
+      "RunTimeTicks": 55758200000,
+      "ProviderIds": {
+        "Tmdb": "9788",
+        "Imdb": "tt0384793"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 2",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24944",
+      "Genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
+      "RunTimeTicks": 76742500000,
+      "ProviderIds": {
+        "Tmdb": "302946",
+        "Imdb": "tt2140479"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Crime"
+        },
+        {
+          "Name": "Thriller"
+        },
+        {
+          "Name": "Drama"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 3",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24877",
+      "Genres": [
+        "Comedy",
+        "Crime",
+        "Music"
+      ],
+      "RunTimeTicks": 55335580000,
+      "ProviderIds": {
+        "Tmdb": "13595",
+        "Imdb": "tt0109068"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Crime"
+        },
+        {
+          "Name": "Music"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 4",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25042",
+      "Genres": [
+        "Adventure",
+        "Comedy",
+        "Horror"
+      ],
+      "RunTimeTicks": 59319260000,
+      "ProviderIds": {
+        "Tmdb": "1234731",
+        "Imdb": "tt33244668"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Horror"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 5",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27694",
+      "Genres": [
+        "Documentary",
+        "Fantasy",
+        "History",
+        "Science Fiction"
+      ],
+      "RunTimeTicks": 26400000000,
+      "ProviderIds": {
+        "Tvdb": "101501",
+        "Imdb": "tt1643266",
+        "Tmdb": "32608",
+        "TvMaze": "675",
+        "Zap2It": "EP01242748",
+        "X (Twitter)": "AncientAliens"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Documentary"
+        },
+        {
+          "Name": "Fantasy"
+        },
+        {
+          "Name": "History"
+        },
+        {
+          "Name": "Science Fiction"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 291,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 6",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27699",
+      "Genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Thriller"
+      ],
+      "RunTimeTicks": 25800000000,
+      "ProviderIds": {
+        "Tvdb": "71035",
+        "Imdb": "tt0162065",
+        "Tmdb": "2426",
+        "TvMaze": "428",
+        "Zap2It": "EP00317395",
+        "AniList": "2230",
+        "AniDB": "1919",
+        "MyAnimeList": "2230"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Action"
+        },
+        {
+          "Name": "Drama"
+        },
+        {
+          "Name": "Fantasy"
+        },
+        {
+          "Name": "Thriller"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 110,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 7",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24895",
+      "Genres": [
+        "Animation",
+        "Science Fiction"
+      ],
+      "RunTimeTicks": 60505600000,
+      "ProviderIds": {
+        "Tmdb": "55931",
+        "Imdb": "tt0328832",
+        "AniList": "1303"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Animation"
+        },
+        {
+          "Name": "Science Fiction"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 8",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27689",
+      "Genres": [
+        "Adventure",
+        "Reality"
+      ],
+      "RunTimeTicks": 30000000000,
+      "ProviderIds": {
+        "Tvdb": "474842",
+        "Imdb": "tt45519527",
+        "Tmdb": "315479",
+        "TvMaze": "93595",
+        "Official Website": "https://www.channel4.com/programmes/apocalypse",
+        "TV Maze": "93595",
+        "AniDB": "44",
+        "MyAnimeList": "2356"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Reality"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 8,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 9",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27719",
+      "Genres": [
+        "Drama",
+        "Family",
+        "Fantasy",
+        "Horror",
+        "Mystery",
+        "Science Fiction",
+        "Thriller"
+      ],
+      "RunTimeTicks": 15000000000,
+      "ProviderIds": {
+        "Tvdb": "77960",
+        "Imdb": "tt0103352",
+        "Tmdb": "2913",
+        "TvMaze": "1805",
+        "EIDR": "10.5240/1D6E-3436-D967-77E2-271A-Z",
+        "Zap2It": "SH036521",
+        "TV Maze": "1805",
+        "Wikidata": "Q1418462",
+        "Wikipedia": "Are_You_Afraid_of_the_Dark%3F"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Drama"
+        },
+        {
+          "Name": "Family"
+        },
+        {
+          "Name": "Fantasy"
+        },
+        {
+          "Name": "Horror"
+        },
+        {
+          "Name": "Mystery"
+        },
+        {
+          "Name": "Science Fiction"
+        },
+        {
+          "Name": "Thriller"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 87,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 10",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27664",
+      "Genres": [
+        "Adventure",
+        "Drama",
+        "Fantasy",
+        "Horror",
+        "Mystery",
+        "Thriller"
+      ],
+      "RunTimeTicks": 26400000000,
+      "ProviderIds": {
+        "Tvdb": "368145",
+        "Imdb": "tt10473306",
+        "Tmdb": "93693",
+        "TvMaze": "43830",
+        "EIDR": "10.5240/A980-C052-6F17-2534-080D-B",
+        "Official Website": "https://www.nick.com/shows/are-you-afraid-of-the-dark",
+        "Zap2It": "SH03317340",
+        "TV Maze": "43830",
+        "Wikidata": "Q107208800",
+        "Wikipedia": "Are_You_Afraid_of_the_Dark"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Drama"
+        },
+        {
+          "Name": "Fantasy"
+        },
+        {
+          "Name": "Horror"
+        },
+        {
+          "Name": "Mystery"
+        },
+        {
+          "Name": "Thriller"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 12,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 11",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25057",
+      "Genres": [
+        "Science Fiction",
+        "Adventure",
+        "Fantasy"
+      ],
+      "RunTimeTicks": 118407040000,
+      "ProviderIds": {
+        "Tmdb": "83533",
+        "Imdb": "tt1757678"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Science Fiction"
+        },
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Fantasy"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 12",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25032",
+      "Genres": [
+        "Comedy",
+        "Drama",
+        "TV Movie"
+      ],
+      "RunTimeTicks": 17700110000,
+      "ProviderIds": {
+        "Tmdb": "24083",
+        "Imdb": "tt0166032"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Drama"
+        },
+        {
+          "Name": "TV Movie"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 13",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27604",
+      "Genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Science Fiction"
+      ],
+      "RunTimeTicks": 26400000000,
+      "ProviderIds": {
+        "Tvdb": "70726",
+        "Imdb": "tt0105946",
+        "Tmdb": "3137",
+        "TvMaze": "475",
+        "Official Website": "https://www.hbomax.com/series/urn:hbo:series:GYAdflwB3q8LDDgEAAAAC",
+        "Zap2It": "SH094234"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Action"
+        },
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Drama"
+        },
+        {
+          "Name": "Science Fiction"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 110,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 14",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25061",
+      "Genres": [
+        "Adventure",
+        "Comedy",
+        "Science Fiction"
+      ],
+      "RunTimeTicks": 69623040000,
+      "ProviderIds": {
+        "Imdb": "tt0088763",
+        "Tmdb": "105"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Science Fiction"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 15",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "25147",
+      "Genres": [
+        "Adventure",
+        "Comedy",
+        "Science Fiction"
+      ],
+      "RunTimeTicks": 70982720000,
+      "ProviderIds": {
+        "Tmdb": "196",
+        "Imdb": "tt0099088"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Adventure"
+        },
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Science Fiction"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 16",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24925",
+      "Genres": [
+        "Action",
+        "Thriller",
+        "Crime"
+      ],
+      "RunTimeTicks": 74794720000,
+      "ProviderIds": {
+        "Tmdb": "541671",
+        "Imdb": "tt7181546"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Action"
+        },
+        {
+          "Name": "Thriller"
+        },
+        {
+          "Name": "Crime"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    },
+    {
+      "Name": "Title 17",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27697",
+      "Genres": [
+        "Comedy"
+      ],
+      "RunTimeTicks": 18000000000,
+      "ProviderIds": {
+        "Imdb": "tt0327269",
+        "Tmdb": "304",
+        "Tvdb": "71076",
+        "TvMaze": "28137",
+        "anidb": "13002",
+        "myanimelist": "8921"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 6,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 18",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27627",
+      "Genres": [
+        "Comedy",
+        "Talk Show"
+      ],
+      "RunTimeTicks": 39000000000,
+      "ProviderIds": {
+        "Imdb": "tt3787912",
+        "Tvdb": "270267",
+        "official website": "https://www.redlettermedia.com/best-of-the-worst",
+        "wikidata": "Q109326862"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Talk Show"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 0,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": true
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 19",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "27682",
+      "Genres": [
+        "Fantasy",
+        "Horror",
+        "Mystery",
+        "Science Fiction",
+        "Thriller"
+      ],
+      "RunTimeTicks": 27000000000,
+      "ProviderIds": {
+        "Tvdb": "75706",
+        "Imdb": "tt0138956",
+        "Tmdb": "12323",
+        "TvMaze": "4197",
+        "Official Website": "https://www.rtl2.de/sendungen/x-factor-das-unfassbare",
+        "Zap2It": "EP00223274"
+      },
+      "IsFolder": true,
+      "Type": "Series",
+      "GenreItems": [
+        {
+          "Name": "Fantasy"
+        },
+        {
+          "Name": "Horror"
+        },
+        {
+          "Name": "Mystery"
+        },
+        {
+          "Name": "Science Fiction"
+        },
+        {
+          "Name": "Thriller"
+        }
+      ],
+      "UserData": {
+        "UnplayedItemCount": 53,
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "AirDays": []
+    },
+    {
+      "Name": "Title 20",
+      "ServerId": "035a2a4a48f94830ac51e586bab5fb34",
+      "Id": "24963",
+      "Genres": [
+        "Comedy",
+        "Crime"
+      ],
+      "RunTimeTicks": 70644910000,
+      "ProviderIds": {
+        "Tmdb": "115",
+        "Imdb": "tt0118715"
+      },
+      "IsFolder": false,
+      "Type": "Movie",
+      "GenreItems": [
+        {
+          "Name": "Comedy"
+        },
+        {
+          "Name": "Crime"
+        }
+      ],
+      "UserData": {
+        "PlaybackPositionTicks": 0,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false
+      },
+      "MediaType": "Video"
+    }
+  ],
+  "TotalRecordCount": 288
+}

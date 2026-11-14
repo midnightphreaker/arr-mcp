@@ -433,6 +433,34 @@ describe('plex', () => {
             const run = () => ConfigSchema.parse({ auth: AUTH2, services: both, primary_media_server: 'emby' });
             expect(run).toThrow();
         });
+
+        // Emby is a media server by capability, so it must not become a third
+        // member of the primary/secondary pair whose join is defined only for the
+        // two servers that have one. Refused at load rather than reached later as
+        // a thrown tool build (see planning/DESIGN.md D5 option 1b).
+        it('refuses emby alongside another media server, naming both', () => {
+            for (const partner of ['jellyfin', 'plex'] as const) {
+                let message = '';
+                try {
+                    ConfigSchema.parse({ auth: AUTH2, services: { emby: media('http://192.0.2.10:8096'), [partner]: media('http://x') } });
+                } catch (e) {
+                    message = String(e);
+                }
+                expect(message, partner).toMatch(/emby/);
+                expect(message, partner).toMatch(new RegExp(partner));
+            }
+        });
+
+        it('accepts emby on its own, without a primary_media_server', () => {
+            const c = ConfigSchema.parse({ auth: AUTH2, services: { emby: media('http://192.0.2.10:8096') } });
+            expect(c.services.emby).toBeDefined();
+            expect('primary_media_server' in c).toBe(false);
+        });
+
+        it('refuses a list of emby instances', () => {
+            const run = () => ConfigSchema.parse({ auth: AUTH2, services: { emby: [{ name: 'a', ...media('http://x') }] } });
+            expect(run).toThrow();
+        });
     });
 
     it('refuses allow_other_users: true on plex — a token is scoped to one account', () => {

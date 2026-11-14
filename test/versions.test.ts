@@ -149,6 +149,7 @@ describe('assertVersionSupported against captured evidence', () => {
         prowlarr: (read('test/fixtures/prowlarr/system-status.json') as { version: string }).version,
         bazarr: (read('test/fixtures/bazarr/system-status.json') as { data: { bazarr_version: string } }).data.bazarr_version,
         jellyfin: (read('test/fixtures/jellyfin/system-info.json') as { Version: string }).Version,
+        emby: (read('test/fixtures/emby/system-info.json') as { Version: string }).Version,
         seerr: (read('test/fixtures/seerr/status.json') as { version: string }).version,
         sabnzbd: (read('test/fixtures/sabnzbd/version.json') as { version: string }).version,
         nzbget: (read('test/fixtures/nzbget/version.json') as { result: string }).result,

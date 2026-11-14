@@ -626,6 +626,64 @@ const CONTRACTS: Record<string, ServiceContract> = {
             // names to catch this would cost more than it is worth.
         ]
     },
+    // No `spec`: Emby publishes an OpenAPI document from the server itself, not at
+    // a fixed URL this repository can fetch nightly (planning/probes.md E1), so
+    // these fields are checked against committed fixtures captured from 4.10.2.0.
+    // That catches us breaking our own adapter; only recapturing catches Emby.
+    emby: {
+        dependencies: [
+            { fixture: 'test/fixtures/emby/system-info.json', fields: ['Version'] },
+            // Captured because it carries no ProductName, which is why the
+            // discovery predicate cannot be Jellyfin's. The contract here is that
+            // this stays a fact and not an oversight.
+            { fixture: 'test/fixtures/emby/system-info-public.json', fields: ['ServerName', 'Version'] },
+            { fixture: 'test/fixtures/emby/users.json', fields: ['Id', 'Name'] },
+            { fixture: 'test/fixtures/emby/sessions.json', fields: ['UserId', 'PlayState', 'NowPlayingItem'] },
+            {
+                // The join keys. Emby spells them Tmdb/Imdb/Tvdb like Jellyfin, and
+                // an upstream rename would break the Radarr/Sonarr join silently.
+                fixture: 'test/fixtures/emby/items-search.json',
+                fields: ['Items', 'Items.Id', 'Items.Name', 'Items.ProviderIds']
+            },
+            {
+                // listUserLibrary. `UserData.Played` and `PlayCount` are what the
+                // watched filter runs on, so a rename must fail here rather than
+                // make the filter match nothing with a green suite.
+                fixture: 'test/fixtures/emby/items-library.json',
+                fields: [
+                    'Items.Id',
+                    'Items.Name',
+                    'Items.Type',
+                    'Items.ProviderIds',
+                    'Items.Genres',
+                    'Items.UserData',
+                    'Items.UserData.Played',
+                    'Items.UserData.PlayCount'
+                ]
+            },
+            {
+                // getNextUp. Empty on the captured instance, so this entry only
+                // contracts the envelope; docs/tools.md carries the
+                // **Unverified live** marker for the rows themselves.
+                fixture: 'test/fixtures/emby/next-up.json',
+                fields: ['Items']
+            },
+            {
+                // getWatchHistory's only source on Emby: `/UserPlayedItems` is 404
+                // and `Filters=Played` is ignored (planning/probes.md P4). The
+                // dotted event type is the shape, so it is contracted as data.
+                fixture: 'test/fixtures/emby/activity-log.json',
+                fields: ['Items.Type', 'Items.ItemId', 'Items.UserId', 'Items.Date']
+            },
+            {
+                // Not read by the first version. Declared because it is the
+                // evidence that a library scan must be matched on `Key`: four other
+                // tasks carry Scan or Refresh in their `Name`.
+                fixture: 'test/fixtures/emby/scheduled-tasks.json',
+                fields: ['Key', 'State']
+            }
+        ]
+    },
     // Spec-checked despite the adapter using local narrow types: a fixture is a
     // frozen recording, so the spec is the only half that can drift.
     jellyfin: {

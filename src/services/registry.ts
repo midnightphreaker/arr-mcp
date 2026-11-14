@@ -83,6 +83,16 @@ function buildAdapter(instance: ServiceInstance): ServiceAdapter {
             return new ShelfmarkAdapter(instance.config);
         case 'grimmory':
             return new GrimmoryAdapter(instance.config);
+        // The one place that maps an id to an adapter, so `emby` has to appear
+        // here for the switch to stay total. It returns no adapter yet: the
+        // adapter itself is Task 4 of planning/IMPLEMENTATION_PLAN.md, and a
+        // media server with no captured behaviour behind it would be worse than
+        // none. Until then a config that names Emby fails loudly here rather
+        // than quietly answering nothing.
+        case 'emby':
+            throw new Error(
+                'the Emby adapter is not built yet. Remove services.emby, or point arr-mcp at the media server you do run'
+            );
         case 'sonarr':
             return new SonarrAdapter(instance.config);
         case 'transmission':

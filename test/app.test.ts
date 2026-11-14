@@ -631,7 +631,7 @@ describe('what the server says about itself at initialize', () => {
     // Record<ServiceId, …> so a new service fails typecheck here until it is named.
     const DISPLAY: Record<ServiceId, string> = {
         radarr: 'Radarr', sonarr: 'Sonarr', whisparr: 'Whisparr', lidarr: 'Lidarr', prowlarr: 'Prowlarr',
-        bazarr: 'Bazarr', jellyfin: 'Jellyfin', seerr: 'Seerr', sabnzbd: 'SABnzbd', nzbget: 'NZBGet',
+        bazarr: 'Bazarr', jellyfin: 'Jellyfin', emby: 'Emby', seerr: 'Seerr', sabnzbd: 'SABnzbd', nzbget: 'NZBGet',
         transmission: 'Transmission', qbittorrent: 'qBittorrent', plex: 'Plex', profilarr: 'Profilarr',
         cleanuparr: 'Cleanuparr', reclaimerr: 'Reclaimerr', dispatcharr: 'Dispatcharr', shelfmark: 'Shelfmark', grimmory: 'Grimmory'
     };

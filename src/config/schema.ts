@@ -9,6 +9,7 @@ export const ServiceIdSchema = z.enum([
     'lidarr',
     'prowlarr',
     'bazarr',
+    'emby',
     'jellyfin',
     'seerr',
     'sabnzbd',
@@ -255,6 +256,7 @@ export type ConfigByService = {
     sabnzbd: For<'sabnzbd', Instanced<KeyedServiceConfig>>;
     nzbget: For<'nzbget', Instanced<CredentialServiceConfig>>;
     jellyfin: For<'jellyfin', MultiUserServiceConfig>;
+    emby: For<'emby', MultiUserServiceConfig>;
     seerr: For<'seerr', MultiUserServiceConfig>;
     plex: For<'plex', PlexServiceConfig>;
     transmission: For<'transmission', Instanced<CredentialServiceConfig>>;
@@ -363,6 +365,10 @@ const SERVICES = {
     sabnzbd: multi(KeyedServiceSchema),
     nzbget: multi(CredentialServiceSchema),
     jellyfin: single(MultiUserServiceSchema),
+    // Single only, and never beside another media server: `get_library`'s
+    // `presence` asks whether the media server can see a file, which has no
+    // answer once two of them are joined. See the refusal in ConfigSchema.
+    emby: single(MultiUserServiceSchema),
     seerr: single(MultiUserServiceSchema),
     transmission: multi(CredentialServiceSchema),
     qbittorrent: multi(CredentialServiceSchema),
@@ -769,6 +775,21 @@ export const ConfigSchema = z.strictObject(ConfigShape, {
     // to Jellyfin, or the reverse.
     const configured = mediaServersIn(config.services);
     const primary = config.primary_media_server;
+    // Emby is a media server by capability, but it is not a member of the
+    // primary/secondary pair: `primary_media_server` names only the two servers
+    // whose join is defined, so an Emby beside either could not be made the
+    // default and would silently be read as the secondary. Refused at load,
+    // naming both blocks, rather than reached later as a thrown tool build.
+    if (config.services.emby !== undefined) {
+        const partner = mediaServersIn(config.services);
+        if (partner.length > 0) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['services', 'emby'],
+                message: `cannot be configured alongside ${partner.join(', ')}. Emby replaces the other media server rather than pairing with it: remove one of them`
+            });
+        }
+    }
     if (configured.length === 2 && primary === undefined) {
         ctx.addIssue({
             code: 'custom',
