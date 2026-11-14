@@ -220,6 +220,43 @@ describe('EmbyAdapter', () => {
         expect(entries).toEqual([]);
     });
 
+    it('keeps an episode the log says was stopped, which is what a stop names', async () => {
+        // Live 4.10.2.0: every logged id resolved to `Type: "Episode"` with its
+        // series coordinates, because stopping a play is a statement about the
+        // file watched, not the show it belongs to. A filter on `Series` here was
+        // the second reason history answered empty.
+        const log = `/System/ActivityLog/Entries?type=playback.stop&hasUserId=true&limit=500`;
+        const live = (async (input: string | URL | Request) => {
+            const url = new URL(input instanceof Request ? input.url : String(input));
+            const path = `${url.pathname}${url.search}`;
+            if (path === log) {
+                return jsonResponse({
+                    Items: [{ Name: 'Someone has finished playing Episode 1', Type: 'playback.stop', ItemId: '48510', Date: '2026-11-14T06:00:00Z', UserId: LOG_USER_ID }],
+                    TotalRecordCount: 1
+                });
+            }
+            if (path === '/Users') {
+                return jsonResponse([{ Id: USER_ID, Name: 'Someone' }]);
+            }
+            if (path.startsWith(LOGGED_ITEMS_PREFIX)) {
+                return jsonResponse({
+                    Items: [{ Id: '48510', Name: 'Valera - Part 1', Type: 'Episode', SeriesName: 'Forensic Investigators', ParentIndexNumber: 2, IndexNumber: 2, RunTimeTicks: 3_000_000_000, UserData: { Played: true, PlaybackPositionTicks: 0 } }]
+                });
+            }
+            return jsonResponse([]);
+        }) as unknown as typeof fetch;
+
+        const entries = await new EmbyAdapter(config, live).getWatchHistory(user);
+        expect(entries).toHaveLength(1);
+        expect(entries[0]).toMatchObject({
+            kind: 'watched',
+            source: 'activity_log',
+            seriesTitle: expect.stringContaining('Forensic Investigators'),
+            season: 2,
+            episode: 2
+        });
+    });
+
     it('never asks a played filter it cannot trust', async () => {
         const asked: string[] = [];
         const watch = (async (input: string | URL | Request) => {
@@ -235,7 +272,7 @@ describe('EmbyAdapter', () => {
         expect(asked.some(p => /Filters=(Is)?Played/.test(p))).toBe(false);
     });
 
-    it('drops a logged item that is not a film or a series', async () => {
+    it('drops a logged item that is neither a film nor an episode', async () => {
         const log = `/System/ActivityLog/Entries?type=playback.stop&hasUserId=true&limit=500`;
         const live = (async (input: string | URL | Request) => {
             const url = new URL(input instanceof Request ? input.url : String(input));

@@ -4,7 +4,7 @@ import type { PlaybackEntry, ServiceUser } from './types.ts';
 import { JellyfinAdapter, type JellyfinFamilyIdentity, type RawActivityEntry } from './jellyfin.ts';
 
 /**
- * The Emby adapter: `JellyfinAdapter` with Emby's identity and the five places
+ * The Emby adapter: `JellyfinAdapter` with Emby's identity and the six places
  * its 4.10 differs, each one recorded in `docs/emby-probes.md` rather
  * than assumed. Everything else (the version read, the user directory,
  * sessions, Next Up, the library read, paging, fencing) is inherited unchanged,
@@ -72,6 +72,8 @@ import { JellyfinAdapter, type JellyfinFamilyIdentity, type RawActivityEntry } f
  *    GUID (probes, item 5; found live rather than in a fixture, because the
  *    captured rows held that value either way). Comparing the two id spaces
  *    dropped every row, which is how a server with real play data answered empty.
+ * 6. **A stop names an episode.** Logged ids resolve to `Type: "Episode"`, so a
+ *    history filter on films and series discards all of them (probes, item 6).
  */
 
 /** Emby's own activity-log filter. The dotted type is what this server accepts;
@@ -82,11 +84,18 @@ const ACTIVITY_LOG_ROUTE = '/System/ActivityLog/Entries?type=playback.stop&hasUs
  *  an uncaptured field name is a claim nobody can check (see the header). */
 const LIBRARY_FIELDS = 'ProviderIds,Genres';
 
-/** Only films and series can be a history row here. Emby's log carries library
- *  events as well as plays, so a logged id that resolves to anything else is
- *  dropped rather than reported as watched; the base filter on `Type` runs
- *  first, this narrows it to what the capture actually covers. */
-const isKnownLibraryItem = (item: { Type?: string }): boolean => item.Type === 'Movie' || item.Type === 'Series';
+/** A logged id that resolves to a film or an episode can be a history row; one
+ *  that resolves to anything else came from a library event this log also carries,
+ *  and is dropped rather than reported as a play. The base filter on `Type` runs
+ *  first and already admits exactly these two kinds, so this narrows nothing: it
+ *  states the same set, which is why it is not where the fix belongs.
+ *
+ *  It was here that the second live defect hid. Writing "Series" read like a
+ *  narrowing to what the capture covered, but a logged stop names the **episode**,
+ *  and its `Type` is `Episode` with `SeriesName`, `ParentIndexNumber` and
+ *  `IndexNumber` on the row (live-confirmed 2026-11-14 against 131 stops). The
+ *  base's own set was right; this filter, not it, dropped every real play. */
+const isKnownLibraryItem = (item: { Type?: string }): boolean => item.Type === 'Episode' || item.Type === 'Movie';
 
 export class EmbyAdapter extends JellyfinAdapter {
     constructor(config: ConfigByService['emby'], fetchImpl: typeof fetch = fetch) {

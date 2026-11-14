@@ -850,7 +850,7 @@ export class JellyfinAdapter
      * The pattern is a constructor argument rather than a literal: Emby's item
      * ids are numeric strings while its user and server ids are 32-hex, so
      * Jellyfin's rule would refuse every real Emby id (docs/emby-probes.md,
-     * item 2 of "Five things its API does not say out loud"). The message names
+     * item 2 of "Six things its API does not say out loud"). The message names
      * the product from `#label`, not from this file's name, because an Emby user
      * must not be told to look in Jellyfin.
      */

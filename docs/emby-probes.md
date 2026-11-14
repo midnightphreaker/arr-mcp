@@ -63,7 +63,7 @@ the adapter.
 | `/Users/{id}/PlayedItems` (Jellyfin's watched-list route) | **404.** Not present on Emby 4.10. |
 | `/Items?userId=…&Filters=Played` vs `Filters=Unplayed` | Both return the same total as unfiltered (157), and every row reports `UserData.Played: false`. **The filter is accepted and ignored**, so it cannot read watch state. |
 | Per-item `UserData` across all 288 library items | `Played: true` on exactly 1 item; `PlayCount`, `LastPlayedDate` and `PlaybackPositionTicks` empty or zero everywhere. |
-| `/System/ActivityLog/Entries?type=playback.stop` | Works (50 rows, 24 distinct items). Resolving those ids gives episodes, not films: the log is the only reliable history source here. |
+| `/System/ActivityLog/Entries?type=playback.stop` | Works (131 rows on the later check, 24 distinct items on the first). **Resolving those ids gives `Type: "Episode"` rows**, each carrying `SeriesName`, `ParentIndexNumber` and `IndexNumber`: a stop names the file watched, not the show it belongs to. The log is the only reliable history source here. |
 | `/Shows/NextUp`, `/Users/{id}/Items/Resume` | 200 and correctly shaped, empty. Empty is plausible for this library (1 of 288 marked played), so it is not evidence either read works with data. That is why both carry an `**Unverified live**` marker in [Tools](tools.md). |
 
 The consequence the adapter is built on: a media server needs the playback,
@@ -73,7 +73,7 @@ the log with this server's own event names, and `UserData.Played` is not trusted
 the way Jellyfin's is. A filter that answers 200 with the unfiltered set is worse
 than a 400: it reads as "nobody has watched anything".
 
-## Five things its API does not say out loud
+## Six things its API does not say out loud
 
 1. **`/System/Info/Public` carries no product name.** Jellyfin's discovery
    predicate keys on `ProductName === 'Jellyfin Server'`, a string this server
@@ -99,6 +99,12 @@ than a 400: it reads as "nobody has watched anything".
    inside one server. Comparing them directly was every Emby history answer being
    empty on a server with real play data; see item 5 of the "On Emby" section in
    [Tools](tools.md) for what the adapter does instead.
+6. **A played stop names the episode, not the show.** The ids in that log resolve
+   to `Type: "Episode"` rows carrying their series coordinates. Any history filter
+   written against "what a library contains" (films and series) silently discards
+   every real play, because nothing in an item list is ever asked to be an episode.
+   Both this and the item above were found only by running the tool against a live
+   server: each fixture held the value that made the wrong code look right.
 
 ## Accuracy note
 

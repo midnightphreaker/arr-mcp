@@ -227,7 +227,7 @@ export const CATALOG: readonly CatalogEntry[] = [
 /**
  * Emby is not discoverable by response content, only by its own container name.
  * `/System/Info/Public` on 4.10.2.0 answers without a product identifier at all
- * (docs/emby-probes.md, item 1 of "Five things its API does not say out loud"):
+ * (docs/emby-probes.md, item 1 of "Six things its API does not say out loud"):
  * `ServerName`, `Version` and ids, nothing that
  * says which MediaBrowser-family server it is. Jellyfin's entry above keys on
  * `ProductName === 'Jellyfin Server'`, a string Emby never sends, so copying it

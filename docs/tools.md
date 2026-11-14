@@ -1397,7 +1397,9 @@ Jellyfin does:
   into an answer, so this read never asks. Every Emby history row is therefore
   `source: "activity_log"`, from the log's own `playback.stop` events (Emby spells
   them with a dot where Jellyfin uses `VideoPlaybackStopped`), and no row is ever
-  `marked_played`.
+  `marked_played`. A logged id resolves to the **episode** that was stopped, whose
+  row carries the series title and coordinates, so those rows are episodes and films
+  only; a stop that names something else in the log (a library event) is dropped.
 - **`active` reads resumable items from the older per-user route.** Emby has no
   `/UserItems/Resume`, so this asks `/Users/{id}/Items/Resume`.
 - **The log names its users differently, and that is invisible in a fixture.** Its
