@@ -125,9 +125,20 @@ const EMBY_OPTIONS: FamilyOptions = {
     // for every user asked about.
     nextUpPath: userId => `/Shows/NextUp?UserId=${encodeURIComponent(userId)}`,
     loggedItemIsKnown: isKnownLibraryItem,
-    // The older per-user resume route: `/UserItems/Resume` is the
-    // documented modern one and was never captured here.
-    resumePath: userId => `/Users/${encodeURIComponent(userId)}/Items/Resume?Limit=500`,
+    // Neither resume route Jellyfin uses works here. `/UserItems/Resume` is 404,
+    // and the older `/Users/{id}/Items/Resume`, though it answers 200 with a
+    // correct envelope, returns **nothing** on an instance measured to have six items
+    // with real resume positions (live, 2026-11-14). What does answer is the library
+    // read with this server's resumable filter: it narrows correctly (6 rows against
+    // 11,570 unfiltered), honours `Limit`, and survives the control that matters
+    // here, an unknown `Filters=` value returning the whole set. No sort is asked
+    // for: a name this server ignores returns the library unfiltered instead.
+    // Positions come from `UserData`, which that read already asks for, and the ids
+    // are Emby's own numeric strings, unchanged.
+    resumePath: userId =>
+        `/Items?userId=${encodeURIComponent(userId)}` +
+        '&Recursive=true&Filters=IsResumable&IncludeItemTypes=Episode,Movie' +
+        '&Limit=500&Fields=UserData',
 
     // Same header Emby accepts (probes P1), different remedy text: a
     // 401 that sends an Emby user to a Jellyfin dashboard tells them

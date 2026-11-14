@@ -1415,10 +1415,10 @@ Because the marked-played half does not exist, a log read that fails leaves Emby
 history empty rather than partly answered. `get_library` still reports per-item
 watch state from each item's own `UserData`; that read is separate and works.
 
-**Unverified live** (Emby): `scope: "next_up"` and the resumable half of `active`, both
-captured as empty lists on the only instance ever asked, and Emby's history rows,
-whose logged item ids were never resolvable against that library. The routes and
-their shapes are captured; no row of either list has been read from a real one.
+**Unverified live** (Emby): `scope: "next_up"`, captured as an empty list on the only
+instance ever asked and still answering empty while in-progress episodes exist, so no
+row of it has been read from a real one. History and the resumable half are no longer
+here: both were read live, which is how three of their bugs surfaced.
 
 **Unverified live** (Plex): that a non-zero `viewOffset` means resume, the basis of the resume and next-up split. The `/library/onDeck` read itself is captured.
 

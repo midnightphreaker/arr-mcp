@@ -48,6 +48,9 @@ const USER_ID = USERS[0]!.Id;
  *  live server every one of those rows was dropped and history answered empty. */
 const LOG_USER_ID = (fixture('activity-log.json') as { Items: { UserId: string }[] }).Items[0]!.UserId;
 
+/** The resumable read this server answers (see `resumePath` in the adapter). */
+const RESUMABLE_ROUTE = `/Items?userId=${USER_ID}&Recursive=true&Filters=IsResumable&IncludeItemTypes=Episode,Movie&Limit=500&Fields=UserData`;
+
 /** The routes the adapter reads, keyed exactly as it builds them. */
 const routesBase: Record<string, unknown> = {
     '/System/Info': fixture('system-info.json'),
@@ -55,6 +58,7 @@ const routesBase: Record<string, unknown> = {
     '/Sessions': fixture('sessions.json'),
     [`/Users/${USER_ID}/Items/Resume?Limit=500`]: { Items: [], TotalRecordCount: 0 },
     '/Shows/NextUp?UserId=26ec3c90105e4da1b5d1456aed14d94d': fixture('next-up.json'),
+    [RESUMABLE_ROUTE]: { Items: [], TotalRecordCount: 0 },
 
     [`/Items?userId=${USER_ID}&Recursive=true&IncludeItemTypes=Movie,Series&Fields=ProviderIds,Genres&EnableUserData=true&EnableImages=false&Limit=500&StartIndex=0`]:
         fixture('items-library.json')
@@ -201,11 +205,37 @@ describe('EmbyAdapter', () => {
         });
     });
 
-    it('asks the resumable read for this user only', async () => {
-        // The route is keyed in `routes`, so a request built with another path
-        // or no Limit reaches nothing and this returns no resume rows.
-        const entries = await adapter().getPlayback(user);
-        expect(entries.filter(e => e.kind === 'resume')).toEqual([]);
+    it('asks the library read for resumable items, since neither Resume route works', async () => {
+        // `/UserItems/Resume` is 404 here and `/Users/{id}/Items/Resume` answers an
+        // empty list on an instance with real resume positions (docs/emby-probes.md).
+        // The filter form is the one this server narrows correctly, so it must be
+        // asked for this user only, with a page limit rather than a server default.
+        const resumable = RESUMABLE_ROUTE;
+        const asked: string[] = [];
+        const live = (async (input: string | URL | Request) => {
+            const url = new URL(input instanceof Request ? input.url : String(input));
+            const path = `${url.pathname}${url.search}`;
+            asked.push(path);
+            if (path === resumable) {
+                return jsonResponse({
+                    Items: [{ Id: '57033', Name: 'Thanks for Nothing, Mom', Type: 'Episode', SeriesName: 'Cops', ParentIndexNumber: 29, IndexNumber: 13, RunTimeTicks: 1231 * 10_000_000, UserData: { Played: false, PlaybackPositionTicks: 9506600000 } }]
+                });
+            }
+            if (path === '/Sessions') return jsonResponse([]);
+            return jsonResponse([]);
+        }) as unknown as typeof fetch;
+
+        const entries = await new EmbyAdapter(config, live).getPlayback(user);
+        expect(asked).toContain(resumable);
+        expect(entries).toHaveLength(1);
+        expect(entries[0]).toMatchObject({
+            kind: 'resume',
+            itemId: '57033',
+            season: 29,
+            episode: 13,
+            positionSeconds: 951,
+            percentComplete: 77
+        });
     });
 
     it('answers next up from the captured envelope', async () => {

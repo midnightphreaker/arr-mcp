@@ -385,7 +385,7 @@ exercise. Where the tool has its own section, the same path carries an
 | Tool | Service | What | Why |
 | --- | --- | --- | --- |
 | `get_playback` | `plex` | Reading a non-zero `viewOffset` as resume and the rest as next-up, in `/library/onDeck` | Plex marks neither kind, and nobody has checked the split against a live server with an in-progress item; the read itself is captured |
-| `get_playback` | `emby` | `scope: "next_up"` and the resumable half of `active` | Both routes are captured from 4.10.2.0 and answered empty on the only instance asked, so no row of either list has been read. History is no longer in this row: it was read live, which is what found two of its bugs |
+| `get_playback` | `emby` | `scope: "next_up"` | The route is captured from 4.10.2.0 and answers empty on the only instance asked, while in-progress episodes exist there, so no row has been read from a real one. History and the resumable half left this table when both were read live; that is what found their bugs |
 | `pause_downloads` | `qbittorrent` | Pause, resume and the speed limit, on both the v4 and v5 verbs, and the `arr-mcp-paused` tag | No qBittorrent on the maintainer's stack; written from the WebUI API description |
 | `pause_downloads` | `transmission` | The whole-client pause and resume by the `arr-mcp-paused` label, and the alternative speed mode read | Written from the RPC spec; no label has been written on the live Transmission |
 | `grab_release` | `qbittorrent` | A magnet link sent to the client | No qBittorrent on the maintainer's stack |
