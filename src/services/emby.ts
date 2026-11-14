@@ -5,11 +5,11 @@ import { JellyfinAdapter, type JellyfinFamilyIdentity } from './jellyfin.ts';
 
 /**
  * The Emby adapter: `JellyfinAdapter` with Emby's identity and the four places
- * its 4.10 differs, each one named in `planning/probes.md` rather than
- * assumed. Everything else (the version read, the user directory, sessions,
- * Next Up, the library read, paging, fencing) is inherited unchanged, which is
- * what `test/embyInherited.test.ts` exists to keep honest: a route or field
- * added to the shared adapter without an Emby fixture behind it fails there.
+ * its 4.10 differs, each one recorded in `docs/emby-probes.md` rather
+ * than assumed. Everything else (the version read, the user directory,
+ * sessions, Next Up, the library read, paging, fencing) is inherited unchanged,
+ * which is what `test/embyInherited.test.ts` exists to keep honest: a route or
+ * field added to the shared adapter without an Emby fixture behind it fails there.
  *
  * ## What is implemented, and why nothing else
  *

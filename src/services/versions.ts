@@ -41,7 +41,7 @@ export const MINIMUM_VERSIONS: Record<ServiceId, string> = {
     // worked: this floor only stops it failing halfway through.
     jellyfin: '10.9.0',
     // 4.10.x is the only Emby this has been exercised against: every route the
-    // adapter reads was probed live on 4.10.2.0 (planning/probes.md). Nothing
+    // adapter reads was probed live on 4.10.2.0 (docs/emby-probes.md). Nothing
     // older was tested, so the floor cannot claim more than that capture proves,
     // and Emby's own API is stable enough across 4.x that a lower floor is an
     // argument someone can make with a capture rather than a guess from me.

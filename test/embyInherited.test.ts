@@ -9,7 +9,8 @@ import { jsonResponse } from './helpers/serve.ts';
  * R1: the guard that makes sharing `jellyfin.ts` safe (DESIGN D1).
  *
  * The Whisparr precedent compares two vendored OpenAPI documents. Emby publishes
- * no fetchable spec (planning/probes.md E1), so there is nothing to diff, and
+ * no fetchable spec (docs/emby-probes.md, "What is still unknown"), so there
+ * is nothing to diff, and
  * the claim worth protecting is narrower anyway: that every request the shared
  * code makes on Emby's behalf is a request a real Emby answered once. That is
  * checkable against the fixtures in this repository, which is what this file does.
@@ -92,7 +93,7 @@ const embyBlock = captureSource.slice(
 /**
  * The one route the adapter asks that this capture script never made, and why it
  * may stay: `/Users/{id}/Items/Resume` answered 200 and correctly shaped in
- * `planning/probes.md` (P3), just not through this script, so it has a probe
+ * `docs/emby-probes.md` (P3), just not through this script, so it has a probe
  * rather than a fixture. Anything new here needs one of the two, not silence.
  */
 const UNPROVEN = new Set(['/Users/u1/Items/Resume']);

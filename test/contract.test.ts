@@ -627,7 +627,8 @@ const CONTRACTS: Record<string, ServiceContract> = {
         ]
     },
     // No `spec`: Emby publishes an OpenAPI document from the server itself, not at
-    // a fixed URL this repository can fetch nightly (planning/probes.md E1), so
+    // a fixed URL this repository can fetch nightly (docs/emby-probes.md, "What is
+    // still unknown"), so
     // these fields are checked against committed fixtures captured from 4.10.2.0.
     // That catches us breaking our own adapter; only recapturing catches Emby.
     emby: {
@@ -670,7 +671,7 @@ const CONTRACTS: Record<string, ServiceContract> = {
             },
             {
                 // getWatchHistory's only source on Emby: `/UserPlayedItems` is 404
-                // and `Filters=Played` is ignored (planning/probes.md P4). The
+                // and `Filters=Played` is ignored (docs/emby-probes.md, P4). The
                 // dotted event type is the shape, so it is contracted as data.
                 fixture: 'test/fixtures/emby/activity-log.json',
                 fields: ['Items.Type', 'Items.ItemId', 'Items.UserId', 'Items.Date']

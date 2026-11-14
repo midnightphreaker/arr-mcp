@@ -121,6 +121,12 @@ scan (its task list was never run), no search or one-item details (a later
 capture), and no `set_watched`, because Emby 4.10 has no `/UserPlayedItems`.
 [Tools](tools.md) marks each of those where a tool would otherwise imply it.
 
+Every claim on this page came from probing one live 4.10.2.0 instance, not from
+Emby's documentation, which does not describe the differences that matter here.
+The requests, their status codes and response field names are in
+[Emby live probes](emby-probes.md), including the three places this server
+disagrees with what a Jellyfin adapter would assume.
+
 ## Plex
 
 ```yaml

@@ -314,13 +314,15 @@ service in no slot at all is a different product.
   no fixture for. Testers on another version, or with a library where Next Up and
   the resumable list are not empty, are what would move those.
 - **Emby: what its API does not say out loud.** Three things a Jellyfin adapter
-  would assume, each recorded at `planning/probes.md` and commented where it is
-  handled. `/System/Info/Public` carries no product name, so Emby cannot be found
-  by response content and discovery refuses to guess it from `ServerName`. Item ids
-  are numeric strings while user and server ids are 32-hex GUIDs, so the id guard
-  cannot be inherited. And a played filter is accepted and ignored while reporting
-  every row unwatched, which is why watch history comes only from the activity log,
-  whose event types are spelled `playback.stop` rather than Jellyfin's.
+  would assume, each recorded in [docs/emby-probes.md](docs/emby-probes.md) and
+  commented where it is handled. `/System/Info/Public` carries no product name, so
+  Emby cannot be found by response content and discovery refuses to guess it from
+  `ServerName`. Item ids are numeric strings while user and server ids are 32-hex
+  GUIDs, so the id guard cannot be inherited. And a played filter is accepted and
+  ignored while reporting every row unwatched, which is why watch history comes
+  only from the activity log, whose event types are spelled `playback.stop` rather
+  than Jellyfin's. That page is also where a probe that turned out to be my
+  harness rather than the server is kept, because an earlier draft of it was wrong.
 - **Plex: more testers.** The adapter has shipped. Its nine read endpoints
   were captured from a volunteer's live 1.43.3.10896 and are contracted in
   `test/contract.test.ts`; `trigger_scan` and `fix_metadata` have run on live
@@ -598,8 +600,10 @@ when either changes, so **review `specs/` in that diff**; the generated files
 are output, not meant to be read by hand.
 
 Radarr, Sonarr, Whisparr, Lidarr, Prowlarr, Jellyfin, Seerr, Profilarr and Grimmory are generated.
-Bazarr, SABnzbd, NZBGet, Transmission, qBittorrent, Plex and Cleanuparr publish no usable spec
-and are hand-written against recorded fixtures. Reclaimerr publishes OpenAPI at
+Bazarr, SABNZBD, NZBGet, Transmission, qBittorrent, Plex, Emby and Cleanuparr publish no usable spec
+and are hand-written against recorded fixtures. Emby serves its OpenAPI document from the running
+server rather than a fixed URL, so there is nothing for the nightly job to fetch; what it does answer
+is written down in [docs/emby-probes.md](docs/emby-probes.md) instead. Reclaimerr publishes OpenAPI at
 `/api/v1/openapi.json`, but its adapter reads seven endpoints and is
 hand-written too, against fixtures captured from 0.6.5. Dispatcharr serves
 OpenAPI only at runtime (`/api/swagger.json`), with nothing committed for the

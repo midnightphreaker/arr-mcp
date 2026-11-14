@@ -1017,7 +1017,7 @@ const ENDPOINTS: Record<ServiceId, Endpoint[]> = {
         }
     ],
     // Emby is captured as a variant of Jellyfin's route set, and the differences
-    // below are the reason it cannot simply reuse it (planning/probes.md):
+    // below are the reason it cannot simply reuse it (docs/emby-probes.md):
     //   * no `/UserPlayedItems`, and `Filters=Played` is accepted but ignored;
     //   * the activity log wraps rows in `{ Items, TotalRecordCount }` and names
     //     events `playback.stop` rather than Jellyfin's `VideoPlaybackStopped`;

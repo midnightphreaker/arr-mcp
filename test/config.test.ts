@@ -437,7 +437,9 @@ describe('plex', () => {
         // Emby is a media server by capability, so it must not become a third
         // member of the primary/secondary pair whose join is defined only for the
         // two servers that have one. Refused at load rather than reached later as
-        // a thrown tool build (see planning/DESIGN.md D5 option 1b).
+        // a thrown tool build, which is the option docs/configuration.md#emby
+        // describes: refuse the pair at load rather than widen what
+        // `primary_media_server` is allowed to name.
         it('refuses emby alongside another media server, naming both', () => {
             for (const partner of ['jellyfin', 'plex'] as const) {
                 let message = '';
