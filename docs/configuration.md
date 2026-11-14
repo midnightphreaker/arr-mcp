@@ -28,8 +28,8 @@ services:
     password: "…"
 ```
 
-All nineteen service ids: `radarr`, `sonarr`, `whisparr`, `lidarr`, `prowlarr`, `bazarr`,
-`jellyfin`, `seerr`, `sabnzbd`, `nzbget`, `transmission`, `qbittorrent`, `plex`,
+All twenty service ids: `radarr`, `sonarr`, `whisparr`, `lidarr`, `prowlarr`, `bazarr`,
+`jellyfin`, `emby`, `seerr`, `sabnzbd`, `nzbget`, `transmission`, `qbittorrent`, `plex`,
 `profilarr`, `cleanuparr`, `reclaimerr`, `dispatcharr`, `shelfmark`, `grimmory`. Configure only what you run. Running both torrent
 clients at once is supported; their queues merge, each item labelled with the
 client it came from.
@@ -95,6 +95,31 @@ Omitting `default_user` is supported: the service still appears in
 `get_stack_health`, and `get_library` returns the Radarr and Sonarr halves with
 Jellyfin marked degraded and a note naming the key. Leaving `jellyfin` out
 entirely is also fine; those tools then work from Radarr and Sonarr alone.
+
+## Emby
+
+```yaml
+services:
+  emby:
+    url: https://emby.example.org      # the reachable base, with no /emby needed
+    api_key: "…"                       # Dashboard → Advanced → Security
+    default_user: "you"                # optional, and the per-user tools want it
+```
+
+Emby is Jellyfin's ancestor, and this adapter is that one with Emby's identity:
+the same `api_key` header, the same per-user reads, the same library join. The
+`url` is used as given, since a server answers both at its root and under
+`/emby`; put whatever your browser uses.
+
+It cannot be configured beside `jellyfin` or `plex`, and the config says so by
+naming both blocks. Those two are paired on purpose: `get_library`'s `presence`
+asks whether a second server sees a file, which has no answer for a third kind.
+An Emby user replaces their Jellyfin rather than adding to it.
+
+What Emby does not answer here is what its own API does not offer: no library
+scan (its task list was never run), no search or one-item details (a later
+capture), and no `set_watched`, because Emby 4.10 has no `/UserPlayedItems`.
+[Tools](tools.md) marks each of those where a tool would otherwise imply it.
 
 ## Plex
 
@@ -182,6 +207,10 @@ user. A Plex secondary with none is read as the token's owner. A Jellyfin
 secondary with none, or either one with a `default_user` that matches nobody, is
 not read, and `get_library` says so in its `note`. Jellyfin's
 `allow_other_users` and Plex's `allow_metadata_repair` stay on their own blocks.
+
+Emby is not part of this pair. It cannot be configured beside either (see
+[Emby](#emby)), and `primary_media_server` still names only `jellyfin` or
+`plex`, because the join above is defined for those two servers.
 
 ## Lidarr
 

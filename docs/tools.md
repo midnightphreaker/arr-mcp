@@ -674,10 +674,14 @@ last 24 hours, since its list keeps every row until a restart or a clear. Rows
 from the same source are collapsed into one, with the newest text and a count of
 the rest. The text is in SABnzbd's own UI language.
 
-qBittorrent, Transmission, Plex, Jellyfin, Seerr and Profilarr have no health
+qBittorrent, Transmission, Plex, Jellyfin, Emby, Seerr and Profilarr have no health
 report this server reads. They appear in `services` with their version and
 connection state, and a fault in one of them shows up as a failed connection
 in `degraded` rather than in `failures`.
+
+Emby reports its scan state as unknown rather than as "not scanning": its task
+list has a library-scan key, but no capture has run it, so the row says nothing
+about when the library was last read. See [`trigger_scan`](#trigger_scan).
 
 ### Profiles, root folders and tags: `get_instance_options`
 
@@ -1377,6 +1381,34 @@ never merged. `service` exists only when two media servers are configured, and
 Plex's `/library/onDeck` mixes resume and next-up rows with nothing marking
 which is which, so `active` and `next_up` split it by `viewOffset`: non-zero
 reads as resume, zero or absent as next-up.
+
+### On Emby
+
+Emby answers the same three scopes from `/Sessions`, `/Shows/NextUp` and its own
+activity log. It is configured on its own, never beside another media server, so
+there is no `service` to pass and nothing to merge.
+
+Two of its answers are built differently, because Emby 4.10 does not offer what
+Jellyfin does:
+
+- **`history` has one source.** `/UserPlayedItems` is absent, and a played filter
+  (`Filters=Played`, `Filters=IsPlayed`) is accepted, ignored, and still reports
+  `Played: false` on every row. Asking it would turn "nobody has watched anything"
+  into an answer, so this read never asks. Every Emby history row is therefore
+  `source: "activity_log"`, from the log's own `playback.stop` events (Emby spells
+  them with a dot where Jellyfin uses `VideoPlaybackStopped`), and no row is ever
+  `marked_played`.
+- **`active` reads resumable items from the older per-user route.** Emby has no
+  `/UserItems/Resume`, so this asks `/Users/{id}/Items/Resume`.
+
+Because the marked-played half does not exist, a log read that fails leaves Emby
+history empty rather than partly answered. `get_library` still reports per-item
+watch state from each item's own `UserData`; that read is separate and works.
+
+**Unverified live** (Emby): `scope: "next_up"` and the resumable half of `active`, both
+captured as empty lists on the only instance ever asked, and Emby's history rows,
+whose logged item ids were never resolvable against that library. The routes and
+their shapes are captured; no row of either list has been read from a real one.
 
 **Unverified live** (Plex): that a non-zero `viewOffset` means resume, the basis of the resume and next-up split. The `/library/onDeck` read itself is captured.
 
@@ -2772,6 +2804,11 @@ once the provider has the title.
 
 On Jellyfin and Plex a scan looks for files that changed. It does not re-match
 what is already there, which is what `fix_metadata` is for.
+
+Emby is not offered: its task list has the library-scan key, but no capture has
+run the task, so neither its POST form nor its running state is known. Ask Emby
+to scan from its own dashboard until that changes; `diagnose_media` will tell you
+to rescan by hand rather than offering a write it cannot prove.
 
 ### On Lidarr
 

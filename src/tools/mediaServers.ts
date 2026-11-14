@@ -38,6 +38,9 @@ function complete(candidate: ServiceAdapter): MediaServerAdapter {
 /** Keyed by adapter `type`; narrowed by hand because each `services` key has its own shape. */
 function configFor(type: ServiceId, services: Config['services']): MultiUserServiceConfig | undefined {
     if (type === 'jellyfin') return services.jellyfin;
+    // Emby's block is the same shape as Jellyfin's by design (`MultiUserServiceSchema`),
+    // and its identity resolver needs it to resolve `default_user` like the others.
+    if (type === 'emby') return services.emby;
     if (type === 'plex') return services.plex;
     return undefined;
 }

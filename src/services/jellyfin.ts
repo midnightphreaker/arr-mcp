@@ -2,7 +2,7 @@ import { aliasesOf } from '../core/titleMatch.ts';
 import type { ConfigByService, ServiceId } from '../config/schema.ts';
 import type { EpisodeRecord, MovieRecord } from '../core/episodeMismatch.ts';
 import type { IndexInput } from '../core/resolver.ts';
-import { embyToken } from '../core/auth.ts';
+import { embyToken, type AuthStrategy } from '../core/auth.ts';
 import { ServiceError } from '../core/errors.ts';
 import { ServiceHttp } from '../core/http.ts';
 import { fenceText } from '../core/fence.ts';
@@ -118,6 +118,18 @@ const ticksToSeconds = (ticks: number | undefined): number | undefined =>
  */
 const ACTIVITY_LOG_ROUTE = '/System/ActivityLog/Entries?type=VideoPlaybackStopped&hasUserId=true&limit=500';
 
+/** The newest logged stop per item, oldest rows dropped. Shared with the Emby
+ *  adapter, which reads its own event type from the same envelope. */
+const newestStopPerItem = (entries: RawActivityEntry[]): RawActivityEntry[] => {
+    const newest = new Map<string, RawActivityEntry>();
+    for (const e of entries) {
+        if (typeof e.ItemId !== 'string' || e.ItemId === '') continue;
+        const kept = newest.get(e.ItemId);
+        if (kept === undefined || (e.Date ?? '') > (kept.Date ?? '')) newest.set(e.ItemId, e);
+    }
+    return [...newest.values()];
+};
+
 /** Ids per `/Items?ids=` read, keeping the URL well short of proxy limits. */
 const LOGGED_ITEMS_CHUNK = 100;
 
@@ -189,6 +201,89 @@ const numericId = (value: string | undefined): number | undefined => {
     return Number(value.trim());
 };
 
+/**
+ * What one server's adapter is, and which of its behaviours differ from the
+ * family default. Only three values exist here, and only for the two servers
+ * that share this code; a third MediaBrowser-family adapter would pass its own.
+ *
+ * The `label` is what an error message calls the service. It is separate from
+ * `id` because `id` is the audit and log identity (`emby/attic` when named) and
+ * must never be interpolated into prose that names a product.
+ */
+export type JellyfinFamilyIdentity = { id: string; type: ServiceId; label: string };
+
+/**
+ * The reads this family knows how to do, and the only way a derived adapter can
+ * claim fewer of them.
+ *
+ * Capability here is decided by whether a method exists at all (the `has*` guards
+ * in `types.ts` probe for it), so an adapter that inherits ten methods and has a
+ * capture for four would silently claim ten. Each name below is replaced with
+ * `undefined` on the instance rather than deleted from the class: deleting needs
+ * a second base class, and this keeps one implementation while making the guard,
+ * the own-property check, and every caller agree. The roster is checked against
+ * the union, so a renamed method is an error here rather than an option that
+ * quietly stopped unclaiming anything.
+ */
+type JellyfinFamilyRead =
+    | 'getMediaDetails'
+    | 'getScanState'
+    | 'search'
+    | 'startLibraryScan'
+    | 'listUserMusic'
+    | 'listUserSeasons'
+    | 'readEpisodeMetadata'
+    | 'readMovieMetadata'
+    | 'readWatchTarget'
+    | 'repairMetadata'
+    | 'setWatched';
+
+const ALL_FAMILY_READS: readonly JellyfinFamilyRead[] = [
+    'getMediaDetails',
+    'getScanState',
+    'search',
+    'startLibraryScan',
+    'listUserMusic',
+    'listUserSeasons',
+    'readEpisodeMetadata',
+    'readMovieMetadata',
+    'readWatchTarget',
+    'repairMetadata',
+    'setWatched'
+];
+
+/** The seams where Emby's 4.10 differs from Jellyfin, each documented at its capture. */
+type FamilyOptions = {
+    /** The activity-log read for `getWatchHistory`, event vocabulary included. */
+    activityLogRoute?: string;
+    /** Whether a logged item is a history row at all. Emby needs it: its log
+     *  covers library events too, and an unrelated row would be reported as a
+     *  play that never happened. */
+    loggedItemIsKnown?: (item: RawItem) => boolean;
+    /** The item-id shape guard, and the phrase describing it in a refusal. Emby ids
+     *  are numeric strings, so Jellyfin's 32-hex rule would refuse every real one. */
+    itemIdPattern?: { pattern: RegExp; shape: string };
+    /** The resumable-items read. Only `getPlayback` asks for an extra `Fields`
+     *  group, and it is a parameter this server has no fixture proving, so the
+     *  base list is overridable rather than widened in place. */
+    resumePath?: (userId: string) => string;
+    /** The `Fields=` list of the per-user library read. */
+    libraryFields?: string;
+    /** The watched-items read that backs half of `getWatchHistory`. Emby has no
+     *  such read: `/UserPlayedItems` is 404 and a played filter answers with the
+     *  whole library, so it asks its own question instead of one that lies. */
+    markedPlayedPath?: (userId: string) => string | undefined;
+    /** The next-up read. Only its parameter name differs between the two. */
+    nextUpPath?: (userId: string) => string;
+    /** The credential strategy, which carries the 401 remedy with it. Emby accepts
+     *  the same header (probes P1) but its key is made somewhere else, so an
+     *  operator told to open a Jellyfin dashboard they do not run learns nothing. */
+    auth?: (apiKey: string) => AuthStrategy;
+    /** The reads this server has no capture for, and therefore does not offer.
+     *  See `JellyfinFamilyRead`. */
+    unclaimedReads?: readonly JellyfinFamilyRead[];
+};
+
 export class JellyfinAdapter
     implements
         ServiceAdapter,
@@ -203,12 +298,54 @@ export class JellyfinAdapter
         MetadataRepairCapable,
         PlaybackCapable
 {
-    readonly type: ServiceId = 'jellyfin';
-    readonly id: string = 'jellyfin';
+    readonly type: ServiceId;
+    readonly id: string;
+    /** What an error message calls this service: `Jellyfin`, or `Emby`. */
+    readonly #label: string;
     readonly #http: ServiceHttp;
+    readonly #activityLogRoute: string;
+    readonly #loggedItemIsKnown: ((item: RawItem) => boolean) | undefined;
+    readonly #itemIdPattern: { pattern: RegExp; shape: string };
+    readonly #resumePath: (userId: string) => string;
+    readonly #libraryFields: string;
+    readonly #markedPlayedPath: (userId: string) => string | undefined;
+    readonly #nextUpPath: (userId: string) => string;
 
-    constructor(config: ConfigByService['jellyfin'], fetchImpl: typeof fetch = fetch) {
-        this.#http = new ServiceHttp('jellyfin', config, embyToken(config.api_key), fetchImpl);
+    constructor(
+        // The two media servers of this family share the same block shape
+        // (`MultiUserServiceSchema`); their configs differ only by the phantom
+        // `__service`, which names the service rather than constraining a field.
+        config: ConfigByService['jellyfin'] | ConfigByService['emby'],
+        fetchImpl: typeof fetch = fetch,
+        identity: JellyfinFamilyIdentity = { id: 'jellyfin', type: 'jellyfin', label: 'Jellyfin' },
+        opts: FamilyOptions = {}
+    ) {
+        this.id = identity.id;
+        this.type = identity.type;
+        this.#label = identity.label;
+        this.#activityLogRoute = opts.activityLogRoute ?? ACTIVITY_LOG_ROUTE;
+        this.#loggedItemIsKnown = opts.loggedItemIsKnown;
+        this.#itemIdPattern = opts.itemIdPattern ?? { pattern: /^[0-9a-f]{32}$/, shape: '32 hex characters' };
+        this.#resumePath =
+            opts.resumePath ?? (userId => `/UserItems/Resume?userId=${encodeURIComponent(userId)}&Limit=500`);
+        this.#libraryFields = opts.libraryFields ?? 'ProviderIds,Genres,OriginalTitle,RecursiveItemCount';
+        this.#markedPlayedPath =
+            opts.markedPlayedPath === undefined
+                ? (userId =>
+                `/Items?userId=${encodeURIComponent(userId)}&SortBy=DatePlayed&SortOrder=Descending` +
+                    '&Filters=IsPlayed&IncludeItemTypes=Episode,Movie&Recursive=true&Limit=500&Fields=UserData')
+                : opts.markedPlayedPath;
+        this.#nextUpPath = opts.nextUpPath ?? (userId => `/Shows/NextUp?userId=${encodeURIComponent(userId)}`);
+        const unclaimed = opts.unclaimedReads ?? [];
+        const auth = opts.auth ?? (key => embyToken(key));
+        this.#http = new ServiceHttp(identity.id, config, auth(config.api_key), fetchImpl);
+
+        for (const read of unclaimed) {
+            if (!ALL_FAMILY_READS.includes(read)) {
+                throw new Error(`${identity.id}: "${read}" is not a read of this family, so it cannot be unclaimed`);
+            }
+            Object.defineProperty(this, read, { value: undefined, writable: true, configurable: true });
+        }
     }
 
     async getVersion(): Promise<string> {
@@ -323,7 +460,7 @@ export class JellyfinAdapter
              * contract layer, which reports it, rather than by an undocumented
              * server default page size, which does not.
              */
-            this.#http.get<RawItemsPage>(`/UserItems/Resume?userId=${encodeURIComponent(user.id)}&Limit=500`)
+            this.#http.get<RawItemsPage>(this.#resumePath(user.id))
         ]);
 
         const nowPlaying: PlaybackEntry[] = sessions
@@ -355,7 +492,7 @@ export class JellyfinAdapter
      * with several in-progress shows.
      */
     async getNextUp(user: ServiceUser): Promise<PlaybackEntry[]> {
-        const page = await this.#http.get<RawItemsPage>(`/Shows/NextUp?userId=${encodeURIComponent(user.id)}`);
+        const page = await this.#http.get<RawItemsPage>(this.#nextUpPath(user.id));
         return (page.Items ?? []).map(item => ({
             ...this.#commonPlayback(user, item),
             kind: 'next_up' as const
@@ -371,15 +508,12 @@ export class JellyfinAdapter
      * not an undocumented server page size.
      */
     async getWatchHistory(user: ServiceUser): Promise<PlaybackEntry[]> {
-        const [page, logged] = await Promise.all([
-            this.#http.get<RawItemsPage>(
-                `/Items?userId=${encodeURIComponent(user.id)}&SortBy=DatePlayed&SortOrder=Descending` +
-                    '&Filters=IsPlayed&IncludeItemTypes=Episode,Movie&Recursive=true&Limit=500&Fields=UserData'
-            ),
-            this.#loggedStops(user)
+        const [markedPage, logged] = await Promise.all([
+            this.#markedPlayedItems(user),
+            this.activityLogStops(user)
         ]);
 
-        const marked: PlaybackEntry[] = (page.Items ?? []).map(item => ({
+        const marked: PlaybackEntry[] = (markedPage ?? []).map(item => ({
             ...this.#commonPlayback(user, item),
             kind: 'watched' as const,
             source: 'marked_played' as const,
@@ -388,45 +522,56 @@ export class JellyfinAdapter
 
         const seen = new Set(marked.map(e => e.itemId));
         const unmarked = logged.filter(e => !seen.has(e.ItemId as string));
-        const fromLog = await this.#loggedPlays(user, unmarked);
+        const fromLog = await this.loggedPlays(user, unmarked);
 
         // ISO-8601 UTC strings sort lexically; an entry with no date goes last.
         return [...marked, ...fromLog].sort((a, b) => (b.lastPlayed ?? '').localeCompare(a.lastPlayed ?? ''));
     }
 
     /**
-     * This user's newest stop per item. A failed read degrades to none rather
-     * than failing the history: the `IsPlayed` half is still a correct answer
-     * to most questions, and losing it over a supplementary read would not be.
+     * The marked-played read, or `undefined` when this server has no such read at
+     * all (Emby: no `/UserPlayedItems`, and a played filter that ignores the
+     * filter). Absent rows are then genuinely "no source for this half", not the
+     * empty answer a filter would return while claiming to have filtered.
      */
-    async #loggedStops(user: ServiceUser): Promise<RawActivityEntry[]> {
+    async #markedPlayedItems(user: ServiceUser): Promise<RawItem[] | undefined> {
+        const path = this.#markedPlayedPath?.(user.id);
+        // No such read on this server (Emby): not an empty answer, and not a
+        // failure to report either. `undefined` here means the half was never
+        // asked, which is what the caller's `marked === undefined` branch says.
+        if (path === undefined) return undefined;
+        const page = await this.#http.get<RawItemsPage>(path);
+        return page.Items ?? [];
+    }
+
+    /** This user's newest stop per item. A failed read degrades to none rather
+     *  than failing the history: the marked-played half is still a correct answer
+     *  to most questions, and losing it over a supplementary read would not be. */
+    protected async activityLogStops(user: ServiceUser): Promise<RawActivityEntry[]> {
         let entries: RawActivityEntry[];
         try {
-            entries = (await this.#http.get<{ Items?: RawActivityEntry[] }>(ACTIVITY_LOG_ROUTE)).Items ?? [];
+            entries = (await this.#http.get<{ Items?: RawActivityEntry[] }>(this.#activityLogRoute)).Items ?? [];
         } catch (err) {
             logger.warn({ service: this.id, err }, 'activity log read failed; history covers marked-played items only');
             return [];
         }
 
-        const newest = new Map<string, RawActivityEntry>();
-        for (const e of entries) {
-            if (e.UserId !== user.id || typeof e.ItemId !== 'string' || e.ItemId === '') continue;
-            const kept = newest.get(e.ItemId);
-            if (kept === undefined || (e.Date ?? '') > (kept.Date ?? '')) newest.set(e.ItemId, e);
-        }
-        return [...newest.values()];
+        return newestStopPerItem(entries.filter(e => e.UserId === user.id));
     }
 
     /**
-     * Logged stops as history rows. Completion is the item's own `UserData`:
-     * a resume position partway through means they stopped, so the row is
+     * Logged stops as history rows. Completion is the item's own `UserData`: a
+     * resume position partway through means they stopped, so the row is
      * `partially_watched`; no position counts as watched, because an offline
-     * client only syncs a stop once the file has been played and Jellyfin
-     * clears the position at both ends. An item gone from the library keeps
-     * its row, titled with the log's own (localised) sentence, since that is
-     * all that is left of it.
+     * client only syncs a stop once the file has been played and the server clears
+     * the position at both ends. An item gone from the library keeps its row,
+     * titled with the log's own (localised) sentence, since that is all that is
+     * left of it.
+     *
+     * `loggedItemIsKnown` narrows this further where a server's log covers more
+     * than plays; see the Emby adapter.
      */
-    async #loggedPlays(user: ServiceUser, stops: RawActivityEntry[]): Promise<PlaybackEntry[]> {
+    protected async loggedPlays(user: ServiceUser, stops: RawActivityEntry[]): Promise<PlaybackEntry[]> {
         if (stops.length === 0) return [];
 
         const ids = stops.map(e => e.ItemId as string);
@@ -457,6 +602,7 @@ export class JellyfinAdapter
                 ];
             }
             if (!HISTORY_TYPES.has(item.Type ?? '')) return [];
+            if (this.#loggedItemIsKnown !== undefined && !this.#loggedItemIsKnown(item)) return [];
 
             const position = item.UserData?.PlaybackPositionTicks ?? 0;
             const partial = item.UserData?.Played !== true && position > 0;
@@ -559,7 +705,7 @@ export class JellyfinAdapter
     async listUserLibrary(user: ServiceUser): Promise<IndexInput[]> {
         const items = await this.#pagedItems<RawItemDetail>(
             `/Items?userId=${encodeURIComponent(user.id)}&Recursive=true&IncludeItemTypes=Movie,Series` +
-                '&Fields=ProviderIds,Genres,OriginalTitle,RecursiveItemCount&EnableUserData=true&EnableImages=false'
+                `&Fields=${this.#libraryFields}&EnableUserData=true&EnableImages=false`
         );
 
         return items.map(i => {
@@ -645,7 +791,7 @@ export class JellyfinAdapter
             const fingerprint = JSON.stringify(items);
             if (start > 0 && items.length > 0 && fingerprint === previous) {
                 throw new ServiceError('UpstreamError', this.id, `${path.split('?')[0]} did not advance past StartIndex=0, the whole page repeated`, {
-                    remedy: 'Jellyfin, or a proxy in front of it, appears to be ignoring the StartIndex query parameter.'
+                    remedy: `${this.#label}, or a proxy in front of it, appears to be ignoring the StartIndex query parameter.`
                 });
             }
             previous = fingerprint;
@@ -668,17 +814,23 @@ export class JellyfinAdapter
      * joining on external ids alone.
      */
     /**
-     * Jellyfin item ids are 32 lowercase hex characters. Checked before any
-     * network call, because the ids a caller is most likely to reach for by
-     * mistake (a Radarr movie id, a Sonarr series id) are small integers,
-     * and sending one on produces a 404 that names nothing useful.
+     * Item ids are checked against this server's own shape before any network
+     * call, because the ids a caller is most likely to reach for by mistake (a
+     * Radarr movie id, a Sonarr series id) are small integers, and sending one
+     * on produces a 404 that names nothing useful.
+     *
+     * The pattern is a constructor argument rather than a literal: Emby's item
+     * ids are numeric strings while its user and server ids are 32-hex, so
+     * Jellyfin's rule would refuse every real Emby id (planning/probes.md,
+     * surprise 2). The message names the product from `#label`, not from this
+     * file's name, because an Emby user must not be told to look in Jellyfin.
      */
     #itemId(id: string): string {
         const clean = id.trim().toLowerCase();
-        if (!/^[0-9a-f]{32}$/.test(clean)) {
-            throw new ServiceError('NotFound', this.id, `"${id}" is not a Jellyfin item id`, {
+        if (!this.#itemIdPattern.pattern.test(clean)) {
+            throw new ServiceError('NotFound', this.id, `"${id}" is not a ${this.#label} item id`, {
                 remedy:
-                    'Jellyfin item ids are 32 hex characters, and are not Radarr or Sonarr ids. Take one from the `itemId` get_playback reports, or from a jellyfin hit in search_media.'
+                    `${this.#label} item ids are ${this.#itemIdPattern.shape}, and are not Radarr or Sonarr ids. Take one from the \`itemId\` get_playback reports, or from a ${this.type} hit in search_media.`
             });
         }
         return clean;

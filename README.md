@@ -197,7 +197,7 @@ them off. The cards are read-only for now.
 | --- | --- |
 | **[Tools](docs/tools.md)** | All forty-four, what each answers, and the fields whose meaning is not obvious |
 | **[Writes](docs/writes.md)** | Turning them on, the two tiers, and the preview-and-confirm handshake |
-| **[Configuration](docs/configuration.md)** | `config.yaml`, the nine services that take a list, Jellyfin's `default_user`, running Plex and Jellyfin side by side |
+| **[Configuration](docs/configuration.md)** | `config.yaml`, the nine services that take a list, Jellyfin's `default_user`, running Plex and Jellyfin side by side, and what Emby does not answer |
 | **[Config UI](docs/config-ui.md)** | The four pages, and what each does that is not obvious |
 | **[Management API](docs/api.md)** | JSON API for companion apps to see and manage services, settings and tokens, with named read or admin keys you create on the config page |
 | **[IMDb ratings](docs/imdb.md)** | The only way to get an IMDb score for a series, and what it costs |
@@ -207,7 +207,7 @@ them off. The cards are read-only for now.
 ## Requirements
 
 - At least one supported service, LAN-reachable: Radarr 4.0+, Sonarr 4.0+,
-  Whisparr 2.x (V2 only, not Eros), Prowlarr 1.0+, Bazarr 1.4+, Jellyfin 10.9+, Plex Media Server (no minimum enforced; verified on 1.43),
+  Whisparr 2.x (V2 only, not Eros), Prowlarr 1.0+, Bazarr 1.4+, Jellyfin 10.9+, Emby 4.10+ (verified on 4.10.2.0), Plex Media Server (no minimum enforced; verified on 1.43),
   Seerr 1.0+, SABnzbd 3.0+, NZBGet 21.0+, Transmission 3.0+, qBittorrent 4.1+, Profilarr 2.2.0+, Cleanuparr 2.10.0+, Reclaimerr 0.6.0+, Dispatcharr 0.33.0+, Shelfmark 1.5.0+, Grimmory 3.5.0+
 - Lidarr 2.1.3+ for reading, monitoring, adding, changing and deleting artists,
   its queue, its wanted list and calendar, release search, `diagnose_media`,
@@ -226,8 +226,8 @@ replacement.
 
 ## Contributing
 
-**Contributions are welcome, and new service adapters most of all**: Emby and
-Deluge would both be accepted today, and
+**Contributions are welcome, and new service adapters most of all**:
+Deluge is accepted today, and
 [the list says so in advance](CONTRIBUTING.md#what-would-be-accepted-today),
 along with the ones that would not be. An adapter is deliberately the most
 self-contained thing in the codebase. Two things to know first: not every
@@ -283,7 +283,7 @@ arr-mcp is glue; the hard parts belong to other people. Nearly every service it
 speaks to is free software maintained largely by volunteers: [Radarr](https://radarr.video),
 [Sonarr](https://sonarr.tv), [Whisparr](https://github.com/Whisparr/Whisparr), [Lidarr](https://lidarr.audio),
 [Prowlarr](https://prowlarr.com),
-[Bazarr](https://www.bazarr.media), [Jellyfin](https://jellyfin.org),
+[Bazarr](https://www.bazarr.media), [Jellyfin](https://jellyfin.org), [Emby](https://emby.media),
 [Seerr](https://github.com/seerr-team/seerr), [SABnzbd](https://sabnzbd.org),
 [NZBGet](https://nzbget.com), [Transmission](https://transmissionbt.com), [qBittorrent](https://www.qbittorrent.org),
 [Profilarr](https://github.com/Dictionarry-Hub/profilarr), [Cleanuparr](https://github.com/Cleanuparr/Cleanuparr), [Reclaimerr](https://github.com/jessielw/Reclaimerr), [Dispatcharr](https://github.com/Dispatcharr/Dispatcharr), [Shelfmark](https://github.com/calibrain/shelfmark), [Grimmory](https://github.com/grimmory-tools/grimmory), as are the libraries it is built

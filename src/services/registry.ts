@@ -3,6 +3,7 @@ import type { Config } from '../config/schema.ts';
 import { BazarrAdapter } from './bazarr.ts';
 import { CleanuparrAdapter } from './cleanuparr.ts';
 import { DispatcharrAdapter } from './dispatcharr.ts';
+import { EmbyAdapter } from './emby.ts';
 import { JellyfinAdapter } from './jellyfin.ts';
 import { LidarrAdapter } from './lidarr.ts';
 import { NzbgetAdapter } from './nzbget.ts';
@@ -83,16 +84,11 @@ function buildAdapter(instance: ServiceInstance): ServiceAdapter {
             return new ShelfmarkAdapter(instance.config);
         case 'grimmory':
             return new GrimmoryAdapter(instance.config);
-        // The one place that maps an id to an adapter, so `emby` has to appear
-        // here for the switch to stay total. It returns no adapter yet: the
-        // adapter itself is Task 4 of planning/IMPLEMENTATION_PLAN.md, and a
-        // media server with no captured behaviour behind it would be worse than
-        // none. Until then a config that names Emby fails loudly here rather
-        // than quietly answering nothing.
+        // The one place that maps an id to an adapter. Emby reuses the Jellyfin
+        // adapter through `EmbyAdapter`, which passes its own identity and the
+        // four options its 4.10 needs; see that file for what is not claimed.
         case 'emby':
-            throw new Error(
-                'the Emby adapter is not built yet. Remove services.emby, or point arr-mcp at the media server you do run'
-            );
+            return new EmbyAdapter(instance.config);
         case 'sonarr':
             return new SonarrAdapter(instance.config);
         case 'transmission':

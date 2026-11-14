@@ -60,7 +60,7 @@ on every load. The sign-in page is a normal login form.
 <img src="../screenshots/config-dark.png" alt="The configuration page: one card per configured instance, with its URL, credentials and per-instance write permissions" width="880">
 
 **The page starts empty.** It shows a card per instance you have actually
-configured, in alphabetical order, and an **Add a service** button, not nineteen
+configured, in alphabetical order, and an **Add a service** button, not twenty
 blank fieldsets for services you do not run. Each card saves on its own, so
 editing your 4K Radarr cannot disturb the HD one. A card saves its whole form,
 so if the config changed after the page loaded (through the management API,

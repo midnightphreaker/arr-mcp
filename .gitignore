@@ -13,3 +13,6 @@ coverage/
 # Internal design specs and implementation plans. Kept in a separate working
 # repo, not published here — the README's roadmap is the public summary.
 /docs/superpowers/
+
+# pi-web-ui SFTP 本机覆盖（可能含明文凭据，勿提交）
+.pi/sftp.local.json

@@ -29,15 +29,43 @@ export const UserSchema = z
 
 type PlaybackScope = 'active' | 'next_up' | 'history';
 
-const ScopeSchema = z
-    .enum(['active', 'next_up', 'history'])
-    .default('active')
-    .describe(
+/**
+ * The base scope enum. `history` is the one part whose wording differs between
+ * media servers, so the description is added per stack by `scopeSchema`; naming a
+ * server a caller does not run tells a model something it cannot act on (#518).
+ */
+const ScopeSchemaBase = z.enum(['active', 'next_up', 'history']).default('active');
+
+const SCOPE_TAIL =
+    '. Defaults to the configured user; another needs allow_other_users. With no media server configured every scope is empty and `note` says why: report that rather than saying nothing is playing. Field reference: arr://docs/get_playback.';
+
+/**
+ * The `history` sentence, which is the only scope text a media server changes.
+ *
+ * Jellyfin merges its marked-played list with its activity log; Emby has no
+ * marked-played read at all (no `/UserPlayedItems`, and a played filter it
+ * ignores), so every row there comes from the log. With nothing configured, or
+ * with Plex alone (whose history is its own single source), the sentence stays as
+ * it was: an unqualified claim about what `history` returns.
+ */
+// `undefined` means one media server or none, which is the case where a
+// description can speak of "your media server"; with two it must name neither.
+const scopeSchema = (ids: readonly string[] | undefined): typeof ScopeSchemaBase => {
+    const only = ids === undefined || ids.length !== 1 ? undefined : ids[0];
+    const history =
+        only === 'emby'
+            ? '; on Emby every row comes from its activity log, since it has no read for items already marked played'
+            : only === 'jellyfin' || only === undefined
+              ? ', including plays its activity log holds that never got marked played, such as an offline client syncing back'
+              : '';
+    return ScopeSchemaBase.describe(
         '`active` (default): now playing and what can be resumed. `next_up`: the next unwatched episode of every ' +
             "series this user has in progress, your media server's own answer to what to watch next. `history`: " +
-            'recently watched movies and episodes, newest first, on Jellyfin including plays its activity log holds ' +
-            'that never got marked played, such as an offline client syncing back.'
+            'recently watched movies and episodes, newest first' +
+            history +
+            SCOPE_TAIL
     );
+};
 
 const project = (e: PlaybackEntry, detail: DetailLevel): PlaybackEntry => {
     if (detail === 'full') return e;
@@ -156,7 +184,7 @@ const getPlaybackInput = byMediaServers(ids => toolInput({
     limit: LimitSchema,
     offset: OffsetSchema,
     user: UserSchema,
-    scope: ScopeSchema,
+    scope: scopeSchema(ids),
     ...serviceInput(ids)
 }));
 

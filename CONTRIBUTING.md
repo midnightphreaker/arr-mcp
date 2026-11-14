@@ -38,7 +38,7 @@ test a branch, ask for a preview image (see
 [Adding a service adapter](#adding-a-service-adapter)).
 
 Adapters I would accept but will not build myself, because I don't run them:
-Emby ([#500](../../issues/500)), Deluge ([#499](../../issues/499)),
+Deluge ([#499](../../issues/499)),
 Maintainerr ([#441](../../issues/441)), Sportarr
 ([#431](../../issues/431)) and Listenarr ([#432](../../issues/432)). Listenarr
 also needs an argument for a stability waiver, since every release so far is
@@ -302,9 +302,25 @@ service in no slot at all is a different product.
 
 **Imported and played: the library a person opens**
 
-- **Emby** ([#500](../../issues/500)). Jellyfin's ancestor, near-identical API, and therefore the cheapest
-  adapter on this list, plausibly a variant of the Jellyfin one rather than a
-  new file.
+- **Emby: more testers.** The adapter has shipped ([#500](../../issues/500)), as
+  predicted: `src/services/emby.ts` is the Jellyfin adapter with Emby's identity
+  and the four places its API differs. Every route it reads was captured from a
+  live Emby Server 4.10.2.0 and is contracted in `test/contract.test.ts`; no spec
+  can watch them, since Emby publishes its OpenAPI document from the server rather
+  than at a fetchable URL, so only a recapture catches Emby changing one. That one
+  instance is the whole coverage: search, one-item details, a library scan and any
+  write are not implemented because nothing has been captured for them, and
+  `test/embyInherited.test.ts` fails if the shared adapter grows a read Emby has
+  no fixture for. Testers on another version, or with a library where Next Up and
+  the resumable list are not empty, are what would move those.
+- **Emby: what its API does not say out loud.** Three things a Jellyfin adapter
+  would assume, each recorded at `planning/probes.md` and commented where it is
+  handled. `/System/Info/Public` carries no product name, so Emby cannot be found
+  by response content and discovery refuses to guess it from `ServerName`. Item ids
+  are numeric strings while user and server ids are 32-hex GUIDs, so the id guard
+  cannot be inherited. And a played filter is accepted and ignored while reporting
+  every row unwatched, which is why watch history comes only from the activity log,
+  whose event types are spelled `playback.stop` rather than Jellyfin's.
 - **Plex: more testers.** The adapter has shipped. Its nine read endpoints
   were captured from a volunteer's live 1.43.3.10896 and are contracted in
   `test/contract.test.ts`; `trigger_scan` and `fix_metadata` have run on live
