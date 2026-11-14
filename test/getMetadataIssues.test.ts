@@ -620,6 +620,20 @@ describe('books in get_metadata_issues', () => {
             books: b as never
         });
 
+    // A media server that cannot be compared against is not a clean library, and a
+    // bare zero is how those two states get confused. Emby is the live instance: its
+    // adapter offers no episode metadata read, so the sweep must say which it found.
+    it('says so when the configured media server cannot be compared against', async () => {
+        // hasUserLibrary true (it is a media server), hasMetadataInspect false: the
+        // shape an Emby adapter has, since its episode metadata read is unclaimed.
+        const embyLike = { id: 'emby', type: 'emby', listUserLibrary: async () => [] } as unknown as ServiceAdapter;
+        // No `books` half, so the whole answer depends on the media server.
+        const result = await buildGetMetadataIssues([embyLike], identity, { detail: 'standard', limit: 50, offset: 0 });
+        expect(result.itemsScanned).toBe(0);
+        expect(result.note).toContain('emby cannot be compared against');
+        expect(metadataIssuesSummary(result)).toContain('not a clean result');
+    });
+
     it('books join with no media server configured', async () => {
         const result = await sweepBooks(books([issue()]));
         expect(result.itemsScanned).toBe(12);

@@ -100,6 +100,9 @@ type GetMetadataIssuesResult = {
     itemsSkipped?: number;
     /** Series the time budget ran out before, so nothing is claimed about them. */
     notSwept?: number;
+    /** Why nothing was compared, when the reason is that no configured media server
+     *  can be compared against. Without it a zero reads as a clean library. */
+    note?: string;
 };
 
 const FIX: Record<Remedy, string> = {
@@ -171,7 +174,7 @@ export function metadataIssueLine(issue: MetadataIssue): string {
     return `${issue.title}: ${facts.join(', ')}; ${issue.fix}`;
 }
 
-type Sweep = { issues: MetadataIssue[]; degraded: string[]; scanned: number; skipped: number; notComparable: string[]; notSwept?: number };
+type Sweep = { issues: MetadataIssue[]; degraded: string[]; scanned: number; skipped: number; notComparable: string[]; notSwept?: number; note?: string };
 
 /** The books half: one adapter call, and a failure only degrades it by name. */
 async function sweepBooks(books: ServiceAdapter & BookMetadataIssueCapable): Promise<Sweep> {
@@ -232,7 +235,10 @@ async function sweepAll(
         scanned: media.scanned + (books?.scanned ?? 0),
         skipped: media.skipped + (books?.skipped ?? 0),
         notComparable: media.notComparable,
-        ...(media.notSwept === undefined ? {} : { notSwept: media.notSwept })
+        ...(media.notSwept === undefined ? {} : { notSwept: media.notSwept }),
+        // Only when nothing at all was compared. With a books half present the count
+        // is real and this would contradict it.
+        ...(media.scanned === 0 && books === undefined && media.note !== undefined ? { note: media.note } : {})
     };
 }
 
@@ -252,12 +258,20 @@ export async function buildGetMetadataIssues(
         budgetMs?: number;
     }
 ): Promise<GetMetadataIssuesResult> {
+    // The "nothing can be compared here" answer is constant for a given set of
+    // adapters, so it must not be cached: an operator who adds a media server that
+    // can be compared against should get the real sweep on the next call.
     const run = () => sweepAll(adapters, identity, opts);
     const key = `sweep:${adapters.map(a => a.id).join(',')}:${opts.user ?? ''}:${opts.books?.id ?? ''}`;
-    const { issues, degraded, scanned, skipped, notComparable, notSwept } =
+    const { issues, degraded, scanned, skipped, notComparable, notSwept, note } =
         opts.sweeps === undefined
             ? await run()
-            : await opts.sweeps.get(key, SWEEP_TTL_MS, run, s => (s.degraded.length === 0 && s.notSwept === undefined ? SWEEP_TTL_MS : DEGRADED_SWEEP_TTL_MS));
+            : await opts.sweeps.get(
+                  key,
+                  SWEEP_TTL_MS,
+                  run,
+                  s => (s.note === undefined && s.degraded.length === 0 && s.notSwept === undefined ? SWEEP_TTL_MS : DEGRADED_SWEEP_TTL_MS)
+              );
 
     const paged = applyLimit(issues, opts.limit, opts.offset);
     return {
@@ -267,7 +281,8 @@ export async function buildGetMetadataIssues(
         itemsScanned: scanned,
         ...(skipped === 0 ? {} : { itemsSkipped: skipped }),
         ...(notComparable.length === 0 ? {} : { notComparable }),
-        ...(notSwept === undefined ? {} : { notSwept })
+        ...(notSwept === undefined ? {} : { notSwept }),
+        ...(note === undefined ? {} : { note })
     };
 }
 
@@ -286,10 +301,34 @@ async function sweepMedia(
     opts: { user?: string; permissions?: PermissionSource; library?: LibraryLoader; budgetMs?: number }
 ): Promise<Sweep> {
     const adapter = adapters.find(a => hasMetadataInspect(a) && hasUserLibrary(a));
-
-    if (adapter === undefined || !hasMetadataInspect(adapter) || !hasUserLibrary(adapter) || identity === undefined) {
+    // `identity` is the join half, and it is absent for a different reason than an
+    // adapter that offers nothing: no identity resolver means no shared ids to match
+    // on, which is a configuration of this server rather than a limit of that one.
+    // Only the second case gets the note, so the two do not borrow each other's
+    // explanation.
+    if (identity !== undefined && adapter === undefined) {
         // Not an error: no media server is a configuration, not a failure, and
-        // `degraded` is for things that were asked and did not answer.
+        // `degraded` is for things that were asked and did not answer. But the two
+        // cases read identically otherwise, and they are different sentences: "you
+        // have no media server" and "the one you have cannot be compared against".
+        // Emby is the live instance of the second: its adapter answers no episode
+        // metadata read (docs/emby-probes.md), so a zero here means nothing was
+        // looked at, which `itemsScanned: 0` alone does not say.
+        const configured = adapters.find(a => hasUserLibrary(a));
+        return {
+            issues: [],
+            degraded: [],
+            scanned: 0,
+            skipped: 0,
+            notComparable: [],
+            ...(configured === undefined
+                ? {}
+                : { note: `${configured.id} cannot be compared against: it offers no episode metadata read. This is not a clean library.` })
+        };
+    }
+    if (adapter === undefined || identity === undefined) {
+        // No media server at all, or no way to join one: configuration, not a
+        // failure, and `degraded` is for things that were asked and did not answer.
         return { issues: [], degraded: [], scanned: 0, skipped: 0, notComparable: [] };
     }
 
@@ -489,7 +528,10 @@ export function registerGetMetadataIssues(
 
 /** The line above the rows: what was compared, what disagrees, and what could not be read. */
 export function metadataIssuesSummary(result: GetMetadataIssuesResult): string {
-    if (result.itemsScanned === 0 && result.notSwept === undefined) return 'No media server library could be read, so nothing was compared. This is not a clean result.';
+    if (result.itemsScanned === 0 && result.notSwept === undefined) {
+        const why = result.note === undefined ? '' : ` ${result.note}`;
+        return `No media server library could be read, so nothing was compared.${why} This is not a clean result.`;
+    }
     const rename = result.items.filter(i => i.remedy === 'rename_files').length;
     const look = result.items.filter(i => i.remedy === 'inspect').length;
     const skipped = result.itemsSkipped ?? 0;

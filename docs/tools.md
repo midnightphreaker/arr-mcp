@@ -2182,7 +2182,11 @@ which is why this is not folded into `get_library`. The series reads stop after
 45 seconds: those not reached are counted in `notSwept`, and the summary says
 nothing is claimed about them.
 
-It works on Jellyfin and Plex. A film's year may drift by two without a
+It works on Jellyfin and Plex, and **not on Emby**, which offers no episode metadata
+read (see [the probes](emby-probes.md)). Asked with only Emby configured it answers
+zero findings and a `note` naming that reason, because an empty list here would
+otherwise read as "nothing disagrees" about a library nothing was compared against.
+A film's year may drift by two without a
 finding, and a matched film whose year agrees is not flagged on its title alone.
 An episode title is compared against every field in the filename, including
 parentheses and both halves of a two-segment name, with accents folded. A
